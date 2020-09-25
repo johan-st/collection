@@ -6,9 +6,11 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
+import Element.Input as Input
 import Html exposing (Html)
 import Page.FizzBuzz exposing (Soda(..), carbonate)
-import Page.Page exposing (Page(..))
+import Page.Page as Page exposing (Page(..))
+import Page.RomanNumerals exposing (Numeral, toRoman)
 import Url
 import Utils.Color as C
 
@@ -21,12 +23,26 @@ type alias Model =
     { key : Nav.Key
     , url : Url.Url
     , page : Page
+    , persistance : Persist
     }
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    ( { key = key, url = url, page = Landing }, Cmd.none )
+    ( { key = key, url = url, page = Landing, persistance = initialPersistance }, Cmd.none )
+
+
+initialPersistance : Persist
+initialPersistance =
+    { numerals = RomanNumerals "" []
+    , fizzbuzz = FizzBuzz
+    }
+
+
+type alias Persist =
+    { numerals : Page
+    , fizzbuzz : Page
+    }
 
 
 
@@ -36,6 +52,7 @@ init _ url key =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url.Url
+    | NumInputChanged String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -54,17 +71,51 @@ update msg model =
                 page =
                     case url.path of
                         "/" ->
-                            Landing
+                            Page.Landing
 
                         "/fizzbuzz" ->
-                            FizzBuzz
+                            model.persistance.fizzbuzz
+
+                        "/numerals" ->
+                            model.persistance.numerals
+
+                        "/visuals" ->
+                            Page.Visuals
 
                         _ ->
-                            NotFound_404
+                            Page.NotFound_404
             in
             ( { model | url = url, page = page }
             , Cmd.none
             )
+
+        NumInputChanged input ->
+            let
+                persist =
+                    { numerals = updateNumsInput model.persistance.numerals input
+                    , fizzbuzz = model.persistance.fizzbuzz
+                    }
+            in
+            ( { model | persistance = persist, page = persist.numerals }, Cmd.none )
+
+
+updateNumsInput : Page -> String -> Page
+updateNumsInput page input =
+    case page of
+        Page.RomanNumerals _ _ ->
+            case String.toInt input of
+                Just int ->
+                    if int < 4000 && int > 0 then
+                        Page.RomanNumerals input (toRoman int)
+
+                    else
+                        page
+
+                Nothing ->
+                    Page.RomanNumerals "" (toRoman 0)
+
+        _ ->
+            Debug.todo "Should never trigger. refactor away?"
 
 
 
@@ -102,9 +153,18 @@ viewFrame model =
 
 navBar : Model -> Element Msg
 navBar model =
-    row [ width fill, BG.color C.darkBase3 ] <|
-        [ link [] { label = text "404", url = "/404" }
-        , link [] { label = text "fizzBuzz", url = "/fizzbuzz" }
+    row
+        [ width fill
+        , BG.color C.darkBase3
+        , spaceEvenly
+        ]
+    <|
+        [ spacer 1
+        , link [ width fill ] { label = text "404", url = "/404" }
+        , link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
+        , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
+        , link [ width fill ] { label = text "Visual Experimentation", url = "/visuals" }
+        , spacer 1
         ]
 
 
@@ -113,20 +173,23 @@ pageViewer page =
     let
         pageView =
             case page of
-                Landing ->
+                Page.Landing ->
                     landing
 
-                FizzBuzz ->
+                Page.FizzBuzz ->
                     fizzBuzz
 
-                RomanNumerals ->
-                    Debug.todo "Implememt Roman Numerals"
+                Page.RomanNumerals int nums ->
+                    numerals int nums
 
-                Diary ->
+                Page.Diary ->
                     Debug.todo "Implement Diary"
 
-                NotFound_404 ->
+                Page.NotFound_404 ->
                     notFound
+
+                Page.Visuals ->
+                    visualsView
     in
     row
         [ width fill
@@ -216,9 +279,92 @@ notFound =
         ]
 
 
+
+-- PAGE-VIEW -- numeral
+
+
+numerals : String -> List Numeral -> Element Msg
+numerals input nums =
+    column
+        [ centerX
+        , centerY
+        ]
+        [ Input.text []
+            { onChange = NumInputChanged
+            , text = input
+            , placeholder = Nothing
+            , label =
+                Input.labelAbove []
+                    (text "enter a number (1-3999)")
+            }
+        , column [] [ el [] <| text (Page.RomanNumerals.numsToString nums) ]
+        ]
+
+
 spacer : Int -> Element Msg
 spacer portion =
     el [ width (fillPortion portion), height (fillPortion portion) ] Element.none
+
+
+
+-- Page-View -- visuals
+
+
+visualsView : Element Msg
+visualsView =
+    wrappedRow
+        [ width fill
+        , centerY
+        , spaceEvenly
+        , padding 50
+        , Font.color C.darkBase3
+        ]
+        [ el
+            [ BG.color C.accent1
+            , width (px 100)
+            , height (px 100)
+            , Border.innerShadow { blur = 6, color = C.highlight, offset = ( 4, 4 ), size = 4 }
+            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+            ]
+          <|
+            el
+                [ width fill
+                , height fill
+                , Border.innerShadow { blur = 6, color = C.shadow, offset = ( -2, -2 ), size = 4 }
+                , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+                ]
+            <|
+                el [ centerX, centerY ] <|
+                    text "accent 1"
+        , el
+            [ BG.color C.accent2
+            , width (px 100)
+            , height (px 100)
+            , Border.shadow { blur = 0, color = C.shadow, offset = ( 4, 4 ), size = 0 }
+            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+            ]
+          <|
+            el [ centerX, centerY ] <|
+                text "accent 2"
+        , el
+            [ BG.color C.accent3
+            , width (px 100)
+            , height (px 100)
+            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+            ]
+          <|
+            el [ centerX, centerY ] <|
+                text "accent 3"
+        , el
+            [ BG.color C.accent4
+            , width (px 100)
+            , height (px 100)
+            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+            ]
+          <|
+            el [ centerX, centerY ] <|
+                text "accent 4"
+        ]
 
 
 

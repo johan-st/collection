@@ -1,6 +1,6 @@
 module Utils.Color exposing (..)
 
-import Element exposing (Color, rgb)
+import Element exposing (Color, rgb, rgba)
 
 
 darkBase1 : Color
@@ -41,3 +41,13 @@ accent4 =
 subtle : Color
 subtle =
     rgb 0.5 0.5 0.5
+
+
+shadow : Color
+shadow =
+    rgba 0 0 0 0.5
+
+
+highlight : Color
+highlight =
+    rgba 1 1 1 0.3

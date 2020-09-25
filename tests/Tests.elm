@@ -3,7 +3,7 @@ module Tests exposing (..)
 import Expect
 import Fuzz exposing (int, intRange)
 import Page.FizzBuzz exposing (Soda(..), carbonate)
-import Page.RomanNumerals exposing (Numeral(..), toRoman)
+import Page.RomanNumerals exposing (Numeral(..), numsToString, toRoman)
 import Test exposing (..)
 
 
@@ -50,5 +50,9 @@ all =
             , test "8 -> [VIII]" <| \_ -> toRoman 8 |> Expect.equal [ V, I, I, I ]
             , test "9 -> [IX]" <| \_ -> toRoman 9 |> Expect.equal [ I, X ]
             , test "10 -> [X]" <| \_ -> toRoman 10 |> Expect.equal [ X ]
+            , test "1444 -> [MCDXLIV]" <| \_ -> toRoman 1444 |> Expect.equal [ M, C, D, X, L, I, V ]
+            , test "1666 -> [MDCLXVI]" <| \_ -> toRoman 1666 |> Expect.equal [ M, D, C, L, X, V, I ]
+            , test "numsToString" <|
+                \_ -> numsToString [ M, C, D, X, L, I, V ] |> Expect.equal "MCDXLIV"
             ]
         ]
