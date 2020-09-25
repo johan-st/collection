@@ -5,3 +5,5 @@ type Page
     = Landing
     | FizzBuzz
     | RomanNumerals
+    | Diary
+    | NotFound_404

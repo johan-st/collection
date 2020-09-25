@@ -7,7 +7,7 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
 import Html exposing (Html)
-import Html.Attributes exposing (title)
+import Page.FizzBuzz exposing (Soda(..), carbonate)
 import Page.Page exposing (Page(..))
 import Url
 import Utils.Color as C
@@ -50,7 +50,19 @@ update msg model =
                     ( model, Nav.load href )
 
         UrlChanged url ->
-            ( { model | url = url }
+            let
+                page =
+                    case url.path of
+                        "/" ->
+                            Landing
+
+                        "/fizzbuzz" ->
+                            FizzBuzz
+
+                        _ ->
+                            NotFound_404
+            in
+            ( { model | url = url, page = page }
             , Cmd.none
             )
 
@@ -61,10 +73,10 @@ update msg model =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "App Title"
+    { title = "url: " ++ model.url.path
     , body =
         [ Element.layout
-            [ BG.color C.darkBase
+            [ BG.color C.darkBase1
             , Font.color C.accent1
             ]
           <|
@@ -78,48 +90,130 @@ viewFrame model =
     column
         [ width fill
         , height fill
-
-        -- , explain Debug.todo
         ]
         [ navBar model
         , pageViewer model.page
         ]
 
 
+
+-- NAVIGATION --
+
+
 navBar : Model -> Element Msg
 navBar model =
-    el [ width fill, BG.color C.darkBase2 ] <| text "navigation goes here"
+    row [ width fill, BG.color C.darkBase3 ] <|
+        [ link [] { label = text "404", url = "/404" }
+        , link [] { label = text "fizzBuzz", url = "/fizzbuzz" }
+        ]
 
 
 pageViewer : Page -> Element Msg
 pageViewer page =
-    case page of
-        Landing ->
-            row
-                [ width fill
-                , height fill
-                , Border.width 2
+    let
+        pageView =
+            case page of
+                Landing ->
+                    landing
 
-                -- , explain Debug.todo
-                ]
-                [ spacer 1
-                , column
-                    [ width (fillPortion 4)
-                    , Border.width 2
-                    , Font.center
+                FizzBuzz ->
+                    fizzBuzz
 
-                    -- , explain Debug.todo
-                    ]
-                  <|
-                    [ text "Landing Page" ]
-                , spacer 1
-                ]
+                RomanNumerals ->
+                    Debug.todo "Implememt Roman Numerals"
 
-        FizzBuzz ->
-            Debug.todo "Implememtn FizzBuzz"
+                Diary ->
+                    Debug.todo "Implement Diary"
 
-        RomanNumerals ->
-            Debug.todo "Implememtn Roman Numerals"
+                NotFound_404 ->
+                    notFound
+    in
+    row
+        [ width fill
+        , height fill
+        ]
+        [ spacer 1
+        , el
+            [ width (fillPortion 4)
+            , height fill
+            , BG.color C.darkBase2
+            ]
+            pageView
+        , spacer 1
+        ]
+
+
+
+-- PAGE-VIEW -- fizzBuzz
+
+
+fizzBuzz : Element Msg
+fizzBuzz =
+    column [ width fill ]
+        [ el [] <| text "welcome to fizzbuzz"
+        , wrappedRow [ spacing 5 ] <| List.map sodaToEl <| List.map carbonate (List.range 1 102)
+        ]
+
+
+sodaToEl : Soda -> Element Msg
+sodaToEl soda =
+    case soda of
+        Uncarbonated int ->
+            el [ Font.color C.subtle ] <| text <| String.fromInt int
+
+        Fizzy ->
+            el [ Font.color C.accent2 ] <| text <| "Fizz"
+
+        Buzzy ->
+            el [ Font.color C.accent4 ] <| text <| "Buzz"
+
+        FizzyBuzzy ->
+            el [ Font.color C.accent3 ] <| text <| "FizzBuzz"
+
+
+
+-- PAGE-VIEW -- landing
+
+
+landing : Element Msg
+landing =
+    row
+        [ width fill
+        , height fill
+        , Border.width 2
+        ]
+        [ column
+            [ width fill
+            , height fill
+            , Font.center
+            ]
+          <|
+            [ text "Landing Page" ]
+        ]
+
+
+
+-- PAGE-VIEW -- notFound
+
+
+notFound : Element Msg
+notFound =
+    row
+        [ width fill
+        , height fill
+        , Border.width 2
+        , Border.color C.accent4
+        ]
+        [ column
+            [ width fill
+            , height fill
+            , Font.center
+            ]
+          <|
+            [ text "404 Not Found"
+            , text "This is not the page you are looking for"
+            ]
+        ]
 
 
 spacer : Int -> Element Msg
