@@ -1,8 +1,10 @@
 module Tests exposing (..)
 
-import Expect
+import Arithmetic exposing (primeFactors)
+import Expect exposing (equal)
 import Fuzz exposing (int, intRange)
 import Page.FizzBuzz exposing (Soda(..), carbonate)
+import Page.PrimeFactorization exposing (factorize)
 import Page.RomanNumerals exposing (Numeral(..), numsToString, toRoman)
 import Test exposing (..)
 
@@ -54,5 +56,25 @@ all =
             , test "1666 -> [MDCLXVI]" <| \_ -> toRoman 1666 |> Expect.equal [ M, D, C, L, X, V, I ]
             , test "numsToString" <|
                 \_ -> numsToString [ M, C, D, X, L, I, V ] |> Expect.equal "MCDXLIV"
+            ]
+        , describe "prime factorisation"
+            [ fuzz (intRange -1 42) " (-1 to 42 ) test against lynn/elm-arithmetic primeFactors" <|
+                \int ->
+                    factorize int
+                        |> (if int < 2 then
+                                Expect.equal Nothing
+
+                            else
+                                Expect.equal (Just (primeFactors int))
+                           )
+
+            -- , fuzz int "(full) test against lynn/elm-arithmetic primeFactors" <|
+            --     \int ->
+            --         factorize int
+            --             |> (if int < 2 then
+            --                     Expect.equal Nothing
+            --                 else
+            --                     Expect.equal (Just (primeFactors int))
+            --                )
             ]
         ]

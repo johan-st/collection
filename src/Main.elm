@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Arithmetic exposing (primeFactors)
 import Browser
 import Browser.Navigation as Nav
 import Element exposing (..)
@@ -7,10 +8,11 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Html exposing (Html)
 import Page.FizzBuzz exposing (Soda(..), carbonate)
 import Page.Page as Page exposing (Page(..))
 import Page.RomanNumerals exposing (Numeral, toRoman)
+import Task
+import Time
 import Url
 import Utils.Color as C
 
@@ -24,24 +26,57 @@ type alias Model =
     , url : Url.Url
     , page : Page
     , persistance : Persist
+    , time : Time.Posix
+    , zone : Time.Zone
     }
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    ( { key = key, url = url, page = Landing, persistance = initialPersistance }, Cmd.none )
+    let
+        page =
+            case url.path of
+                "/" ->
+                    Page.Landing
+
+                "/fizzbuzz" ->
+                    Page.FizzBuzz 15
+
+                "/numerals" ->
+                    Page.RomanNumerals "" []
+
+                "/visuals" ->
+                    Page.Visuals
+
+                "/primes" ->
+                    Page.PrimeFact ""
+
+                _ ->
+                    Page.NotFound_404
+    in
+    ( { key = key
+      , url = url
+      , page = page
+      , persistance = initialPersistance
+      , time = Time.millisToPosix 0
+      , zone = Time.utc
+      }
+    , Task.perform AdjustTimeZone Time.here
+    )
 
 
 initialPersistance : Persist
 initialPersistance =
     { numerals = RomanNumerals "" []
-    , fizzbuzz = FizzBuzz
+    , fizzbuzz = FizzBuzz 15
+    , primeFactors = Page.PrimeFact ""
     }
 
 
 type alias Persist =
     { numerals : Page
     , fizzbuzz : Page
+    , primeFactors : Page
     }
 
 
@@ -52,11 +87,19 @@ type alias Persist =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url.Url
-    | NumInputChanged String
+    | NumeralInputChanged String
+    | FizzBuzzSliderMoved Float
+    | PrimeFactChanged String
+    | Tick Time.Posix
+    | AdjustTimeZone Time.Zone
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        debug =
+            Debug.log "update" <| Debug.toString msg
+    in
     case msg of
         UrlRequested urlRequest ->
             case urlRequest of
@@ -82,6 +125,9 @@ update msg model =
                         "/visuals" ->
                             Page.Visuals
 
+                        "/primes" ->
+                            model.persistance.primeFactors
+
                         _ ->
                             Page.NotFound_404
             in
@@ -89,14 +135,43 @@ update msg model =
             , Cmd.none
             )
 
-        NumInputChanged input ->
+        NumeralInputChanged input ->
             let
                 persist =
                     { numerals = updateNumsInput model.persistance.numerals input
                     , fizzbuzz = model.persistance.fizzbuzz
+                    , primeFactors = model.persistance.primeFactors
                     }
             in
             ( { model | persistance = persist, page = persist.numerals }, Cmd.none )
+
+        FizzBuzzSliderMoved newPos ->
+            let
+                persist =
+                    { numerals = model.persistance.numerals
+                    , fizzbuzz = Page.FizzBuzz newPos
+                    , primeFactors = model.persistance.primeFactors
+                    }
+            in
+            ( { model | persistance = persist, page = persist.fizzbuzz }, Cmd.none )
+
+        PrimeFactChanged input ->
+            let
+                persist =
+                    { numerals = model.persistance.numerals
+                    , fizzbuzz = model.persistance.fizzbuzz
+                    , primeFactors = Page.PrimeFact input
+                    }
+            in
+            ( { model | persistance = persist, page = persist.primeFactors }, Cmd.none )
+
+        Tick time ->
+            ( { model | time = time }, Cmd.none )
+
+        AdjustTimeZone newZone ->
+            ( { model | zone = newZone }
+            , Cmd.none
+            )
 
 
 updateNumsInput : Page -> String -> Page
@@ -112,10 +187,10 @@ updateNumsInput page input =
                         page
 
                 Nothing ->
-                    Page.RomanNumerals "" (toRoman 0)
+                    Page.RomanNumerals "" []
 
         _ ->
-            Debug.todo "Should never trigger. refactor away?"
+            Debug.todo "Should never trigger. Refactor away?"
 
 
 
@@ -157,14 +232,16 @@ navBar model =
         [ width fill
         , BG.color C.darkBase3
         , spaceEvenly
+        , padding 5
         ]
     <|
         [ spacer 1
-        , link [ width fill ] { label = text "404", url = "/404" }
         , link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
         , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
+        , link [ width fill ] { label = text "Prime Factorization", url = "/primes" }
         , link [ width fill ] { label = text "Visual Experimentation", url = "/visuals" }
         , spacer 1
+        , el [ Font.color C.accent3 ] <| text (toTime model.zone model.time)
         ]
 
 
@@ -176,8 +253,8 @@ pageViewer page =
                 Page.Landing ->
                     landing
 
-                Page.FizzBuzz ->
-                    fizzBuzz
+                Page.FizzBuzz fizzility ->
+                    fizzBuzz fizzility
 
                 Page.RomanNumerals int nums ->
                     numerals int nums
@@ -190,6 +267,9 @@ pageViewer page =
 
                 Page.Visuals ->
                     visualsView
+
+                Page.PrimeFact num ->
+                    primeFactorsView num
     in
     row
         [ width fill
@@ -207,14 +287,75 @@ pageViewer page =
 
 
 
+-- PAGE-VIEW -- primeFactors
+
+
+primeFactorsView : String -> Element Msg
+primeFactorsView num =
+    column
+        [ centerX
+        , centerY
+        ]
+        [ Input.text
+            [ width (px 300)
+            , centerX
+            ]
+            { onChange = PrimeFactChanged
+            , text = num
+            , placeholder = Nothing
+            , label =
+                Input.labelAbove []
+                    (text "enter a number to factorize")
+            }
+        , column
+            [ centerX
+            , padding 30
+            ]
+            [ wrappedRow
+                [ spacing 5 ]
+              <|
+                List.map
+                    (\int ->
+                        el [ Font.color C.subtle ] <|
+                            text <|
+                                String.fromInt int
+                    )
+                    (primeFactors (Maybe.withDefault 0 (String.toInt num)))
+            ]
+        ]
+
+
+
 -- PAGE-VIEW -- fizzBuzz
 
 
-fizzBuzz : Element Msg
-fizzBuzz =
+fizzBuzz : Float -> Element Msg
+fizzBuzz fizzity =
     column [ width fill ]
-        [ el [] <| text "welcome to fizzbuzz"
-        , wrappedRow [ spacing 5 ] <| List.map sodaToEl <| List.map carbonate (List.range 1 102)
+        [ el
+            [ centerX
+            , padding 30
+            , Font.size 60
+            , Font.color C.accent3
+            ]
+          <|
+            text "welcome to fizzbuzz"
+        , Input.slider
+            [ BG.color C.darkBase3
+            , width fill
+            , paddingXY 100 0
+            , Border.width 1
+            , Border.rounded 50
+            ]
+            { onChange = FizzBuzzSliderMoved
+            , label = Input.labelLeft [ paddingXY 5 15 ] <| text "How fizzy you ask?"
+            , min = 0
+            , max = 500
+            , value = fizzity
+            , thumb = Input.defaultThumb
+            , step = Just 1
+            }
+        , wrappedRow [ spacing 5 ] <| List.map sodaToEl <| List.map carbonate (List.range 1 (ceiling fizzity))
         ]
 
 
@@ -289,21 +430,30 @@ numerals input nums =
         [ centerX
         , centerY
         ]
-        [ Input.text []
-            { onChange = NumInputChanged
+        [ Input.text
+            [ width (px 300)
+            , centerX
+            ]
+            { onChange = NumeralInputChanged
             , text = input
             , placeholder = Nothing
             , label =
                 Input.labelAbove []
                     (text "enter a number (1-3999)")
             }
-        , column [] [ el [] <| text (Page.RomanNumerals.numsToString nums) ]
+        , column
+            [ centerX
+            , padding 30
+            ]
+            [ el
+                [ Font.size 60
+                , Font.family [ Font.serif ]
+                , Font.color C.accent4
+                ]
+              <|
+                text (Page.RomanNumerals.numsToString nums)
+            ]
         ]
-
-
-spacer : Int -> Element Msg
-spacer portion =
-    el [ width (fillPortion portion), height (fillPortion portion) ] Element.none
 
 
 
@@ -368,6 +518,51 @@ visualsView =
 
 
 
+-- PAGE-VIEW -- extras
+
+
+spacer : Int -> Element Msg
+spacer portion =
+    el [ width (fillPortion portion), height (fillPortion portion) ] Element.none
+
+
+toTime : Time.Zone -> Time.Posix -> String
+toTime zone posix =
+    let
+        hourInt =
+            Time.toHour zone posix
+
+        hour =
+            if hourInt < 10 then
+                "0" ++ String.fromInt hourInt
+
+            else
+                String.fromInt hourInt
+
+        minInt =
+            Time.toMinute zone posix
+
+        min =
+            if minInt < 10 then
+                "0" ++ String.fromInt minInt
+
+            else
+                String.fromInt minInt
+
+        secInt =
+            Time.toSecond zone posix
+
+        sec =
+            if secInt < 10 then
+                "0" ++ String.fromInt secInt
+
+            else
+                String.fromInt secInt
+    in
+    hour ++ ":" ++ min ++ ":" ++ sec
+
+
+
 ---- PROGRAM ----
 
 
@@ -388,5 +583,5 @@ main =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+subscriptions _ =
+    Time.every 1000 Tick
