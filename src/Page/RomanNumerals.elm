@@ -11,11 +11,13 @@ type Msg
 
 
 type alias Model =
-    String
+    { input : String
+    , nums : List Numeral
+    }
 
 
-view : String -> List Numeral -> Element Msg
-view input nums =
+view : Model -> Element Msg
+view { input, nums } =
     column
         [ centerX
         , centerY
@@ -46,18 +48,20 @@ view input nums =
         ]
 
 
-update : Model -> String -> Model
-update model input =
-    case String.toInt input of
-        Just int ->
-            if int < 4000 && int > 0 then
-                input
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        InputChanged input ->
+            case String.toInt input of
+                Just int ->
+                    if int < 4000 && int > 0 then
+                        ( { model | input = input, nums = toRoman int }, Cmd.none )
 
-            else
-                ""
+                    else
+                        ( model, Cmd.none )
 
-        Nothing ->
-            ""
+                Nothing ->
+                    ( { input = "", nums = [] }, Cmd.none )
 
 
 type Numeral

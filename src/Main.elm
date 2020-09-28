@@ -44,7 +44,7 @@ init _ url key =
                     Page.FizzBuzz 15
 
                 "/numerals" ->
-                    Page.RomanNumerals "" []
+                    Page.RomanNumerals (Numeral.Model "" [])
 
                 "/visuals" ->
                     Page.Visuals Visuals.init
@@ -68,7 +68,7 @@ init _ url key =
 
 initialPersistance : Persist
 initialPersistance =
-    { numerals = RomanNumerals "" []
+    { numerals = RomanNumerals (Numeral.Model "" [])
     , fizzbuzz = FizzBuzz 15
     , primeFactors = Page.PrimeFactorization ""
     }
@@ -139,16 +139,16 @@ update msg model =
 
         GotNumeralMsg numMsg ->
             case model.page of
-                Page.RomanNumerals numModel _ ->
+                Page.RomanNumerals numModel ->
                     toNumeral model (Numeral.update numMsg numModel)
 
                 _ ->
                     ( model, Cmd.none )
 
-        GotFizzBuzzMsg newPos ->
+        GotFizzBuzzMsg fizzBuzzMsg ->
             case model.page of
                 Page.FizzBuzz fizzBuzzModel ->
-                    toPrime model (FizzBuzz.update fizzBuzzMsg fizzBuzzModel)
+                    toFizzBuzz model (FizzBuzz.update fizzBuzzMsg fizzBuzzModel)
 
                 _ ->
                     ( model, Cmd.none )
@@ -194,14 +194,14 @@ toVisuals model ( visModel, cmd ) =
 
 toNumeral : Model -> ( Numeral.Model, Cmd Numeral.Msg ) -> ( Model, Cmd Msg )
 toNumeral model ( numModel, cmd ) =
-    ( { model | page = Page.Numeral numModel }
+    ( { model | page = Page.RomanNumerals numModel }
     , Cmd.map GotNumeralMsg cmd
     )
 
 
 toFizzBuzz : Model -> ( FizzBuzz.Model, Cmd FizzBuzz.Msg ) -> ( Model, Cmd Msg )
-toFizzBuzz model ( FizzBuzzModel, cmd ) =
-    ( { model | page = Page.FizzBuzz FizzBuzzModel }
+toFizzBuzz model ( fizzBuzzModel, cmd ) =
+    ( { model | page = Page.FizzBuzz fizzBuzzModel }
     , Cmd.map GotFizzBuzzMsg cmd
     )
 
@@ -266,11 +266,11 @@ pageViewer page =
                 Page.Landing ->
                     landing
 
-                Page.FizzBuzz fizzility ->
-                    fizzBuzz fizzility
+                Page.FizzBuzz fizzBuzzModel ->
+                    FizzBuzz.view fizzBuzzModel |> Element.map GotFizzBuzzMsg
 
-                Page.RomanNumerals int nums ->
-                    numerals int nums
+                Page.RomanNumerals numeralModel ->
+                    Numeral.view numeralModel |> Element.map GotNumeralMsg
 
                 Page.Diary ->
                     Debug.todo "Implement Diary"
@@ -298,7 +298,8 @@ pageViewer page =
         , spacer 1
         ]
 
->
+
+
 -- PAGE-VIEW -- landing
 
 

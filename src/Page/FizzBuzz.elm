@@ -21,13 +21,17 @@ type alias Model =
 
 type Msg
     = SliderMoved Float
+    | Tick
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg _ =
+update msg model =
     case msg of
         SliderMoved newPos ->
             ( newPos, Cmd.none )
+
+        Tick ->
+            ( model + 1, Cmd.none )
 
 
 view : Float -> Element Msg
