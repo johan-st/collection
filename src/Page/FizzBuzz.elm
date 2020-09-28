@@ -5,7 +5,6 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Time
 import Utils.Color as C
 
 
@@ -18,7 +17,7 @@ type Soda
 
 type alias Model =
     { slider : Float
-    , zeroTime : Time.Posix
+    , sliderMax : Float
     }
 
 
@@ -26,10 +25,10 @@ type Msg
     = SliderMoved Float
 
 
-init : Float -> Time.Posix -> Model
-init slider time =
+init : Float -> Model
+init slider =
     { slider = slider
-    , zeroTime = time
+    , sliderMax = 10
     }
 
 
@@ -42,6 +41,10 @@ update msg model =
 
 view : Model -> Element Msg
 view model =
+    let
+        sliderMax =
+            model.slider + 100
+    in
     column [ width fill ]
         [ el
             [ centerX
@@ -61,7 +64,7 @@ view model =
             { onChange = SliderMoved
             , label = Input.labelLeft [ paddingXY 5 15 ] <| text "How fizzy you ask?"
             , min = 0
-            , max = 500
+            , max = sliderMax
             , value = model.slider
             , thumb = Input.defaultThumb
             , step = Just 1

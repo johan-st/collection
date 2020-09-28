@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Events
 import Browser.Navigation as Nav
 import Element exposing (..)
 import Element.Background as BG
@@ -40,7 +41,7 @@ init _ url key =
                     Page.Landing
 
                 "/fizzbuzz" ->
-                    Page.FizzBuzz <| FizzBuzz.init 7 (Time.millisToPosix 0)
+                    Page.FizzBuzz <| FizzBuzz.init 7
 
                 "/numerals" ->
                     Page.RomanNumerals (Numeral.Model "" [])
@@ -68,7 +69,7 @@ init _ url key =
 initialPersistance : Persist
 initialPersistance =
     { numerals = RomanNumerals (Numeral.Model "" [])
-    , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 0 (Time.millisToPosix 0)
+    , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 0
     , primeFactors = Page.PrimeFactorization ""
     }
 
