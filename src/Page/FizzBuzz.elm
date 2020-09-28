@@ -5,6 +5,7 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Time
 import Utils.Color as C
 
 
@@ -16,26 +17,31 @@ type Soda
 
 
 type alias Model =
-    Float
+    { slider : Float
+    , zeroTime : Time.Posix
+    }
 
 
 type Msg
     = SliderMoved Float
-    | Tick
+
+
+init : Float -> Time.Posix -> Model
+init slider time =
+    { slider = slider
+    , zeroTime = time
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SliderMoved newPos ->
-            ( newPos, Cmd.none )
-
-        Tick ->
-            ( model + 1, Cmd.none )
+            ( { model | slider = newPos }, Cmd.none )
 
 
-view : Float -> Element Msg
-view fizzity =
+view : Model -> Element Msg
+view model =
     column [ width fill ]
         [ el
             [ centerX
@@ -56,11 +62,11 @@ view fizzity =
             , label = Input.labelLeft [ paddingXY 5 15 ] <| text "How fizzy you ask?"
             , min = 0
             , max = 500
-            , value = fizzity
+            , value = model.slider
             , thumb = Input.defaultThumb
             , step = Just 1
             }
-        , wrappedRow [ spacing 5 ] <| List.map sodaToEl <| List.map carbonate (List.range 1 (ceiling fizzity))
+        , wrappedRow [ spacing 5 ] <| List.map sodaToEl <| List.map carbonate (List.range 1 (ceiling model.slider))
         ]
 
 

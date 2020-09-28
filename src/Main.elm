@@ -6,11 +6,10 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
-import Page.FizzBuzz as FizzBuzz exposing (Soda(..), carbonate)
+import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
 import Page.Page as Page exposing (Page(..))
 import Page.PrimeFactorization as Prime
-import Page.RomanNumerals as Numeral exposing (Numeral, toRoman)
+import Page.RomanNumerals as Numeral
 import Page.Visuals as Visuals
 import Task
 import Time
@@ -41,7 +40,7 @@ init _ url key =
                     Page.Landing
 
                 "/fizzbuzz" ->
-                    Page.FizzBuzz 15
+                    Page.FizzBuzz <| FizzBuzz.init 7 (Time.millisToPosix 0)
 
                 "/numerals" ->
                     Page.RomanNumerals (Numeral.Model "" [])
@@ -69,7 +68,7 @@ init _ url key =
 initialPersistance : Persist
 initialPersistance =
     { numerals = RomanNumerals (Numeral.Model "" [])
-    , fizzbuzz = FizzBuzz 15
+    , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 0 (Time.millisToPosix 0)
     , primeFactors = Page.PrimeFactorization ""
     }
 
@@ -178,6 +177,11 @@ update msg model =
             )
 
 
+updateTime : Time.Posix -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateTime time ( model, cmd ) =
+    ( { model | time = time }, cmd )
+
+
 toPrime : Model -> ( Prime.Model, Cmd Prime.Msg ) -> ( Model, Cmd Msg )
 toPrime model ( primeModel, cmd ) =
     ( { model | page = Page.PrimeFactorization primeModel }
@@ -201,7 +205,17 @@ toNumeral model ( numModel, cmd ) =
 
 toFizzBuzz : Model -> ( FizzBuzz.Model, Cmd FizzBuzz.Msg ) -> ( Model, Cmd Msg )
 toFizzBuzz model ( fizzBuzzModel, cmd ) =
-    ( { model | page = Page.FizzBuzz fizzBuzzModel }
+    let
+        newFizz =
+            Page.FizzBuzz fizzBuzzModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | fizzbuzz = newFizz }
+    in
+    ( { model | page = newFizz, persistance = newPersist }
     , Cmd.map GotFizzBuzzMsg cmd
     )
 
@@ -231,7 +245,7 @@ viewFrame model =
         , height fill
         ]
         [ navBar model
-        , pageViewer model.page
+        , pageViewer model
         ]
 
 
@@ -258,11 +272,11 @@ navBar model =
         ]
 
 
-pageViewer : Page -> Element Msg
-pageViewer page =
+pageViewer : Model -> Element Msg
+pageViewer model =
     let
         pageView =
-            case page of
+            case model.page of
                 Page.Landing ->
                     landing
 
