@@ -1,6 +1,5 @@
 module Main exposing (..)
 
-import Arithmetic exposing (primeFactors)
 import Browser
 import Browser.Navigation as Nav
 import Element exposing (..)
@@ -8,9 +7,11 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Page.FizzBuzz exposing (Soda(..), carbonate)
+import Page.FizzBuzz as FizzBuzz exposing (Soda(..), carbonate)
 import Page.Page as Page exposing (Page(..))
-import Page.RomanNumerals exposing (Numeral, toRoman)
+import Page.PrimeFactorization as Prime
+import Page.RomanNumerals as Numeral exposing (Numeral, toRoman)
+import Page.Visuals as Visuals
 import Task
 import Time
 import Url
@@ -46,10 +47,10 @@ init _ url key =
                     Page.RomanNumerals "" []
 
                 "/visuals" ->
-                    Page.Visuals
+                    Page.Visuals Visuals.init
 
                 "/primes" ->
-                    Page.PrimeFact ""
+                    Page.PrimeFactorization ""
 
                 _ ->
                     Page.NotFound_404
@@ -69,7 +70,7 @@ initialPersistance : Persist
 initialPersistance =
     { numerals = RomanNumerals "" []
     , fizzbuzz = FizzBuzz 15
-    , primeFactors = Page.PrimeFact ""
+    , primeFactors = Page.PrimeFactorization ""
     }
 
 
@@ -87,11 +88,12 @@ type alias Persist =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url.Url
-    | NumeralInputChanged String
-    | FizzBuzzSliderMoved Float
-    | PrimeFactChanged String
     | Tick Time.Posix
     | AdjustTimeZone Time.Zone
+    | GotFizzBuzzMsg FizzBuzz.Msg
+    | GotNumeralMsg Numeral.Msg
+    | GotPrimeMsg Prime.Msg
+    | GotVisualsMsg Visuals.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -123,7 +125,7 @@ update msg model =
                             model.persistance.numerals
 
                         "/visuals" ->
-                            Page.Visuals
+                            Page.Visuals ""
 
                         "/primes" ->
                             model.persistance.primeFactors
@@ -135,35 +137,37 @@ update msg model =
             , Cmd.none
             )
 
-        NumeralInputChanged input ->
-            let
-                persist =
-                    { numerals = updateNumsInput model.persistance.numerals input
-                    , fizzbuzz = model.persistance.fizzbuzz
-                    , primeFactors = model.persistance.primeFactors
-                    }
-            in
-            ( { model | persistance = persist, page = persist.numerals }, Cmd.none )
+        GotNumeralMsg numMsg ->
+            case model.page of
+                Page.RomanNumerals numModel _ ->
+                    toNumeral model (Numeral.update numMsg numModel)
 
-        FizzBuzzSliderMoved newPos ->
-            let
-                persist =
-                    { numerals = model.persistance.numerals
-                    , fizzbuzz = Page.FizzBuzz newPos
-                    , primeFactors = model.persistance.primeFactors
-                    }
-            in
-            ( { model | persistance = persist, page = persist.fizzbuzz }, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
 
-        PrimeFactChanged input ->
-            let
-                persist =
-                    { numerals = model.persistance.numerals
-                    , fizzbuzz = model.persistance.fizzbuzz
-                    , primeFactors = Page.PrimeFact input
-                    }
-            in
-            ( { model | persistance = persist, page = persist.primeFactors }, Cmd.none )
+        GotFizzBuzzMsg newPos ->
+            case model.page of
+                Page.FizzBuzz fizzBuzzModel ->
+                    toPrime model (FizzBuzz.update fizzBuzzMsg fizzBuzzModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotPrimeMsg primeMsg ->
+            case model.page of
+                Page.PrimeFactorization primeModel ->
+                    toPrime model (Prime.update primeMsg primeModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotVisualsMsg visMsg ->
+            case model.page of
+                Page.Visuals visModel ->
+                    toVisuals model (Visuals.update visMsg visModel)
+
+                _ ->
+                    ( model, Cmd.none )
 
         Tick time ->
             ( { model | time = time }, Cmd.none )
@@ -174,23 +178,32 @@ update msg model =
             )
 
 
-updateNumsInput : Page -> String -> Page
-updateNumsInput page input =
-    case page of
-        Page.RomanNumerals _ _ ->
-            case String.toInt input of
-                Just int ->
-                    if int < 4000 && int > 0 then
-                        Page.RomanNumerals input (toRoman int)
+toPrime : Model -> ( Prime.Model, Cmd Prime.Msg ) -> ( Model, Cmd Msg )
+toPrime model ( primeModel, cmd ) =
+    ( { model | page = Page.PrimeFactorization primeModel }
+    , Cmd.map GotPrimeMsg cmd
+    )
 
-                    else
-                        page
 
-                Nothing ->
-                    Page.RomanNumerals "" []
+toVisuals : Model -> ( Visuals.Model, Cmd Visuals.Msg ) -> ( Model, Cmd Msg )
+toVisuals model ( visModel, cmd ) =
+    ( { model | page = Page.Visuals visModel }
+    , Cmd.map GotVisualsMsg cmd
+    )
 
-        _ ->
-            Debug.todo "Should never trigger. Refactor away?"
+
+toNumeral : Model -> ( Numeral.Model, Cmd Numeral.Msg ) -> ( Model, Cmd Msg )
+toNumeral model ( numModel, cmd ) =
+    ( { model | page = Page.Numeral numModel }
+    , Cmd.map GotNumeralMsg cmd
+    )
+
+
+toFizzBuzz : Model -> ( FizzBuzz.Model, Cmd FizzBuzz.Msg ) -> ( Model, Cmd Msg )
+toFizzBuzz model ( FizzBuzzModel, cmd ) =
+    ( { model | page = Page.FizzBuzz FizzBuzzModel }
+    , Cmd.map GotFizzBuzzMsg cmd
+    )
 
 
 
@@ -265,11 +278,11 @@ pageViewer page =
                 Page.NotFound_404 ->
                     notFound
 
-                Page.Visuals ->
-                    visualsView
+                Page.Visuals visModel ->
+                    Visuals.view visModel |> Element.map GotVisualsMsg
 
-                Page.PrimeFact num ->
-                    primeFactorsView num
+                Page.PrimeFactorization num ->
+                    Prime.view num |> Element.map GotPrimeMsg
     in
     row
         [ width fill
@@ -285,97 +298,7 @@ pageViewer page =
         , spacer 1
         ]
 
-
-
--- PAGE-VIEW -- primeFactors
-
-
-primeFactorsView : String -> Element Msg
-primeFactorsView num =
-    column
-        [ centerX
-        , centerY
-        ]
-        [ Input.text
-            [ width (px 300)
-            , centerX
-            ]
-            { onChange = PrimeFactChanged
-            , text = num
-            , placeholder = Nothing
-            , label =
-                Input.labelAbove []
-                    (text "enter a number to factorize")
-            }
-        , column
-            [ centerX
-            , padding 30
-            ]
-            [ wrappedRow
-                [ spacing 5 ]
-              <|
-                List.map
-                    (\int ->
-                        el [ Font.color C.subtle ] <|
-                            text <|
-                                String.fromInt int
-                    )
-                    (primeFactors (Maybe.withDefault 0 (String.toInt num)))
-            ]
-        ]
-
-
-
--- PAGE-VIEW -- fizzBuzz
-
-
-fizzBuzz : Float -> Element Msg
-fizzBuzz fizzity =
-    column [ width fill ]
-        [ el
-            [ centerX
-            , padding 30
-            , Font.size 60
-            , Font.color C.accent3
-            ]
-          <|
-            text "welcome to fizzbuzz"
-        , Input.slider
-            [ BG.color C.darkBase3
-            , width fill
-            , paddingXY 100 0
-            , Border.width 1
-            , Border.rounded 50
-            ]
-            { onChange = FizzBuzzSliderMoved
-            , label = Input.labelLeft [ paddingXY 5 15 ] <| text "How fizzy you ask?"
-            , min = 0
-            , max = 500
-            , value = fizzity
-            , thumb = Input.defaultThumb
-            , step = Just 1
-            }
-        , wrappedRow [ spacing 5 ] <| List.map sodaToEl <| List.map carbonate (List.range 1 (ceiling fizzity))
-        ]
-
-
-sodaToEl : Soda -> Element Msg
-sodaToEl soda =
-    case soda of
-        Uncarbonated int ->
-            el [ Font.color C.subtle ] <| text <| String.fromInt int
-
-        Fizzy ->
-            el [ Font.color C.accent2 ] <| text <| "Fizz"
-
-        Buzzy ->
-            el [ Font.color C.accent4 ] <| text <| "Buzz"
-
-        FizzyBuzzy ->
-            el [ Font.color C.accent3 ] <| text <| "FizzBuzz"
-
-
-
+>
 -- PAGE-VIEW -- landing
 
 
@@ -417,103 +340,6 @@ notFound =
             [ text "404 Not Found"
             , text "This is not the page you are looking for"
             ]
-        ]
-
-
-
--- PAGE-VIEW -- numeral
-
-
-numerals : String -> List Numeral -> Element Msg
-numerals input nums =
-    column
-        [ centerX
-        , centerY
-        ]
-        [ Input.text
-            [ width (px 300)
-            , centerX
-            ]
-            { onChange = NumeralInputChanged
-            , text = input
-            , placeholder = Nothing
-            , label =
-                Input.labelAbove []
-                    (text "enter a number (1-3999)")
-            }
-        , column
-            [ centerX
-            , padding 30
-            ]
-            [ el
-                [ Font.size 60
-                , Font.family [ Font.serif ]
-                , Font.color C.accent4
-                ]
-              <|
-                text (Page.RomanNumerals.numsToString nums)
-            ]
-        ]
-
-
-
--- Page-View -- visuals
-
-
-visualsView : Element Msg
-visualsView =
-    wrappedRow
-        [ width fill
-        , centerY
-        , spaceEvenly
-        , padding 50
-        , Font.color C.darkBase3
-        ]
-        [ el
-            [ BG.color C.accent1
-            , width (px 100)
-            , height (px 100)
-            , Border.innerShadow { blur = 6, color = C.highlight, offset = ( 4, 4 ), size = 4 }
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
-            ]
-          <|
-            el
-                [ width fill
-                , height fill
-                , Border.innerShadow { blur = 6, color = C.shadow, offset = ( -2, -2 ), size = 4 }
-                , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
-                ]
-            <|
-                el [ centerX, centerY ] <|
-                    text "accent 1"
-        , el
-            [ BG.color C.accent2
-            , width (px 100)
-            , height (px 100)
-            , Border.shadow { blur = 0, color = C.shadow, offset = ( 4, 4 ), size = 0 }
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
-            ]
-          <|
-            el [ centerX, centerY ] <|
-                text "accent 2"
-        , el
-            [ BG.color C.accent3
-            , width (px 100)
-            , height (px 100)
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
-            ]
-          <|
-            el [ centerX, centerY ] <|
-                text "accent 3"
-        , el
-            [ BG.color C.accent4
-            , width (px 100)
-            , height (px 100)
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
-            ]
-          <|
-            el [ centerX, centerY ] <|
-                text "accent 4"
         ]
 
 

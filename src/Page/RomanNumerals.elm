@@ -1,6 +1,63 @@
 module Page.RomanNumerals exposing (..)
 
-import Url.Parser exposing (string)
+import Element exposing (..)
+import Element.Font as Font
+import Element.Input as Input
+import Utils.Color as C
+
+
+type Msg
+    = InputChanged String
+
+
+type alias Model =
+    String
+
+
+view : String -> List Numeral -> Element Msg
+view input nums =
+    column
+        [ centerX
+        , centerY
+        ]
+        [ Input.text
+            [ width (px 300)
+            , centerX
+            ]
+            { onChange = InputChanged
+            , text = input
+            , placeholder = Nothing
+            , label =
+                Input.labelAbove []
+                    (text "enter a number (1-3999)")
+            }
+        , column
+            [ centerX
+            , padding 30
+            ]
+            [ el
+                [ Font.size 60
+                , Font.family [ Font.serif ]
+                , Font.color C.accent4
+                ]
+              <|
+                text (numsToString nums)
+            ]
+        ]
+
+
+update : Model -> String -> Model
+update model input =
+    case String.toInt input of
+        Just int ->
+            if int < 4000 && int > 0 then
+                input
+
+            else
+                ""
+
+        Nothing ->
+            ""
 
 
 type Numeral
