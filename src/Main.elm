@@ -291,7 +291,7 @@ pageViewer model =
                     Debug.todo "Implement Diary"
 
                 Page.NotFound_404 ->
-                    notFound
+                    notFound model.url
 
                 Page.Visuals visModel ->
                     Visuals.view visModel |> Element.map GotVisualsMsg
@@ -339,8 +339,8 @@ landing =
 -- PAGE-VIEW -- notFound
 
 
-notFound : Element Msg
-notFound =
+notFound : Url.Url -> Element Msg
+notFound url =
     row
         [ width fill
         , height fill
@@ -355,11 +355,16 @@ notFound =
           <|
             [ text "404 Not Found"
             , text "This is not the page you are looking for"
+            , text <| "Full Url" ++ Url.toString url
             ]
         ]
 
 
 
+--   https://example.com:8042/over/there?name=ferret#nose
+--   \___/   \______________/\_________/ \_________/ \__/
+--     |            |            |            |        |
+--   scheme     authority       path        query   fragment
 -- PAGE-VIEW -- extras
 
 
