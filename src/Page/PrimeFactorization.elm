@@ -19,7 +19,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NumberChanged numberInput ->
-            ( numberInput, Cmd.none )
+            case String.toInt numberInput of
+                Just _ ->
+                    ( numberInput, Cmd.none )
+
+                Nothing ->
+                    ( "", Cmd.none )
 
 
 view : String -> Element Msg

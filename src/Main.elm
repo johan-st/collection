@@ -400,7 +400,7 @@ toTime zone posix =
             else
                 String.fromInt secInt
     in
-    hour ++ ":" ++ min
+    hour ++ ":" ++ min ++ ":" ++ sec
 
 
 
@@ -425,4 +425,4 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 10000 Tick
+    Time.every 1000 Tick
