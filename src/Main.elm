@@ -61,7 +61,7 @@ init _ url key =
       , time = Time.millisToPosix 0
       , zone = Time.utc
       }
-    , Task.perform AdjustTimeZone Time.here
+    , Cmd.batch [ Task.perform AdjustTimeZone Time.here, Task.perform Tick Time.now ]
     )
 
 
@@ -400,7 +400,7 @@ toTime zone posix =
             else
                 String.fromInt secInt
     in
-    hour ++ ":" ++ min ++ ":" ++ sec
+    hour ++ ":" ++ min
 
 
 
@@ -425,4 +425,4 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 1000 Tick
+    Time.every 10000 Tick
