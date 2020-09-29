@@ -3,6 +3,8 @@ module Page.RomanNumerals exposing (..)
 import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
+import Json.Decode as D
+import Json.Encode as E
 import Utils.Color as C
 
 
@@ -155,3 +157,89 @@ toRomanRecc x r =
 
             else
                 toRomanRecc (x - 1) (I :: r)
+
+
+
+-- ENCODE / DECODE --
+
+
+modelEncoder : Model -> E.Value
+modelEncoder model =
+    E.object
+        [ ( "input", E.string model.input )
+        , ( "nums", E.list numeralEncoder model.nums )
+        ]
+
+
+numeralEncoder : Numeral -> E.Value
+numeralEncoder num =
+    case num of
+        M ->
+            E.string "M"
+
+        D ->
+            E.string "D"
+
+        C ->
+            E.string "C"
+
+        L ->
+            E.string "L"
+
+        X ->
+            E.string "X"
+
+        V ->
+            E.string "V"
+
+        I ->
+            E.string "I"
+
+
+modelDecoder : D.Decoder Model
+modelDecoder =
+    D.map2 Model
+        (D.field "input" D.string)
+        (D.field "nums" (D.list numeralDecoder))
+
+
+numeralDecoder : D.Decoder Numeral
+numeralDecoder =
+    D.string
+        |> D.andThen numHelper
+
+
+numHelper : String -> D.Decoder Numeral
+numHelper num =
+    case num of
+        "M" ->
+            D.succeed M
+
+        "D" ->
+            D.succeed D
+
+        "C" ->
+            D.succeed C
+
+        "L" ->
+            D.succeed L
+
+        "X" ->
+            D.succeed X
+
+        "V" ->
+            D.succeed V
+
+        "I" ->
+            D.succeed I
+
+        _ ->
+            D.fail <|
+                "Trying to decode a Numeral, but "
+                    ++ num
+                    ++ " is not a valid one."
+
+
+
+-- infoDecoder4 : Decoder Info
+-- infoDecoder3 : Decoder Info

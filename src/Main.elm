@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
@@ -6,10 +6,13 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
+import Element.Input as Input
+import Json.Decode as D
+import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
-import Page.Page as Page exposing (Page(..))
+import Page.Page as Page exposing (Page(..), fizzbuzzDecoder, numeralsDecoder, pageEncoder, primeDecoder)
 import Page.PrimeFactorization as Prime
-import Page.RomanNumerals as Numeral
+import Page.RomanNumerals as Numeral exposing (Numeral(..))
 import Page.Visuals as Visuals
 import Task
 import Time
@@ -31,25 +34,28 @@ type alias Model =
     }
 
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url key =
+init : String -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
     let
+        persist =
+            initialPersistance flags
+
         page =
             case url.path of
                 "/" ->
                     Page.Landing
 
                 "/fizzbuzz" ->
-                    initialPersistance.fizzbuzz
+                    persist.fizzbuzz
 
                 "/numerals" ->
-                    initialPersistance.numerals
+                    persist.numerals
 
                 "/visuals" ->
                     Page.Visuals Visuals.init
 
                 "/primes" ->
-                    initialPersistance.primeFactors
+                    persist.primeFactors
 
                 _ ->
                     Page.NotFound_404
@@ -57,25 +63,30 @@ init _ url key =
     ( { key = key
       , url = url
       , page = page
-      , persistance = initialPersistance
+      , persistance = initialPersistance flags
       , time = Time.millisToPosix 0
       , zone = Time.utc
       }
-    , Cmd.batch [ Task.perform AdjustTimeZone Time.here, Task.perform Tick Time.now ]
+    , Cmd.batch [ Task.perform AdjustTimeZone Time.here, Task.perform Tick Time.now, log ("flags on init:\n" ++ flags) ]
     )
 
 
-initialPersistance : Persist
-initialPersistance =
-    { numerals = RomanNumerals (Numeral.Model "" [])
-    , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
-    , primeFactors = Page.PrimeFactorization ""
-    }
+initialPersistance : String -> Persist
+initialPersistance flags =
+    case D.decodeString persistDecoder flags of
+        Result.Err _ ->
+            { numerals = RomanNumerals (Numeral.Model "" [])
+            , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
+            , primeFactors = Page.PrimeFactorization ""
+            }
+
+        Ok data ->
+            data
 
 
 type alias Persist =
-    { numerals : Page
-    , fizzbuzz : Page
+    { fizzbuzz : Page
+    , numerals : Page
     , primeFactors : Page
     }
 
@@ -93,14 +104,11 @@ type Msg
     | GotNumeralMsg Numeral.Msg
     | GotPrimeMsg Prime.Msg
     | GotVisualsMsg Visuals.Msg
+    | UpdateLocalStorage
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        debug =
-            Debug.log "update" <| Debug.toString msg
-    in
     case msg of
         UrlRequested urlRequest ->
             case urlRequest of
@@ -173,8 +181,11 @@ update msg model =
 
         AdjustTimeZone newZone ->
             ( { model | zone = newZone }
-            , Cmd.none
+            , log "AdjustTimeZone"
             )
+
+        UpdateLocalStorage ->
+            ( model, setPersist (E.encode 1 (persistEncoder model.persistance)) )
 
 
 updateTime : Time.Posix -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -192,8 +203,9 @@ toPrime model ( primeModel, cmd ) =
             model.persistance
 
         newPersist =
-            { persist | primeFactors =  newPrime }              
-    in    ( { model | page = newPrime , persistance = newPersist }
+            { persist | primeFactors = newPrime }
+    in
+    ( { model | page = newPrime, persistance = newPersist }
     , Cmd.map GotPrimeMsg cmd
     )
 
@@ -216,7 +228,8 @@ toNumeral model ( numModel, cmd ) =
 
         newPersist =
             { persist | numerals = newNumeral }
-    in    ( { model | page = newNumeral, persistance = newPersist  }
+    in
+    ( { model | page = newNumeral, persistance = newPersist }
     , Cmd.map GotNumeralMsg cmd
     )
 
@@ -277,14 +290,19 @@ navBar model =
         [ width fill
         , BG.color C.darkBase3
         , spaceEvenly
-        , padding 5
+        , paddingXY 20 10
         ]
     <|
-        [ spacer 1
+        [ spacer 2
         , link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
         , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
         , link [ width fill ] { label = text "Prime Factorization", url = "/primes" }
         , link [ width fill ] { label = text "Visual Experimentation", url = "/visuals" }
+        , spacer 2
+        , Input.button [ Font.underline, Font.color C.accent2 ]
+            { onPress = Just UpdateLocalStorage
+            , label = text "save state"
+            }
         , spacer 1
         , el [ Font.color C.accent3 ] <| text (toTime model.zone model.time)
         ]
@@ -305,7 +323,7 @@ pageViewer model =
                     Numeral.view numeralModel |> Element.map GotNumeralMsg
 
                 Page.Diary ->
-                    Debug.todo "Implement Diary"
+                    landing
 
                 Page.NotFound_404 ->
                     notFound model.url
@@ -359,6 +377,7 @@ landing =
 --     |            |            |            |        |
 --   scheme     authority       path        query   fragment
 
+
 notFound : Url.Url -> Element Msg
 notFound url =
     row
@@ -378,6 +397,7 @@ notFound url =
             , text <| "Full Url" ++ Url.toString url
             ]
         ]
+
 
 
 -- PAGE-VIEW -- extras
@@ -428,7 +448,7 @@ toTime zone posix =
 ---- PROGRAM ----
 
 
-main : Program () Model Msg
+main : Program String Model Msg
 main =
     Browser.application
         { init = init
@@ -447,3 +467,35 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Time.every 1000 Tick
+
+
+
+-- PORTS
+
+
+port log : String -> Cmd msg
+
+
+port setPersist : String -> Cmd msg
+
+
+
+-- ENCODE / DECODE --
+
+
+persistEncoder : Persist -> E.Value
+persistEncoder p =
+    E.object
+        [ ( "storeVersion", E.string "v_2020-9-29" )
+        , ( "fizzbuzz", pageEncoder p.fizzbuzz )
+        , ( "numerals", pageEncoder p.numerals )
+        , ( "prime", pageEncoder p.primeFactors )
+        ]
+
+
+persistDecoder : D.Decoder Persist
+persistDecoder =
+    D.map3 Persist
+        (D.field "fizzbuzz" Page.fizzbuzzDecoder)
+        (D.field "numerals" Page.numeralsDecoder)
+        (D.field "prime" Page.primeDecoder)
