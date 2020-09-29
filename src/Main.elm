@@ -75,10 +75,10 @@ initialPersistance : String -> Persist
 initialPersistance flags =
     case D.decodeString persistDecoder flags of
         Result.Err msg ->
-            -- let
-            --     debug =
-            --         Debug.log ("decoder error in initial persistance: " ++ Debug.toString msg)
-            -- in
+            let
+                debug =
+                    Debug.log ("decoder error in initial persistance: " ++ Debug.toString msg)
+            in
             { numerals = RomanNumerals (Numeral.Model "" [])
             , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
             , primeFactors = Page.PrimeFactorization ""
@@ -89,8 +89,8 @@ initialPersistance flags =
 
 
 type alias Persist =
-    { numerals : Page
-    , fizzbuzz : Page
+    { fizzbuzz : Page
+    , numerals : Page
     , primeFactors : Page
     }
 
@@ -144,11 +144,13 @@ update msg model =
                             model.persistance.numerals
 
                         "/visuals" ->
-                            Page.Visuals ""
+                            Page.NotFound_404
 
+                        -- Page.Visuals ""
                         "/primes" ->
-                            model.persistance.primeFactors
+                            Page.NotFound_404
 
+                        -- model.persistance.primeFactors
                         _ ->
                             Page.NotFound_404
             in
@@ -500,8 +502,8 @@ persistEncoder p =
     E.object
         [ ( "storeVersion", E.string "v_2020-9-29" )
         , ( "fizzbuzz", pageEncoder p.fizzbuzz )
-        , ( "prime", pageEncoder p.primeFactors )
         , ( "numerals", pageEncoder p.numerals )
+        , ( "prime", pageEncoder p.primeFactors )
         ]
 
 
@@ -509,5 +511,5 @@ persistDecoder : D.Decoder Persist
 persistDecoder =
     D.map3 Persist
         (D.field "fizzbuzz" Page.fizzbuzzDecoder)
-        (D.field "prime" Page.primeDecoder)
         (D.field "numerals" Page.numeralsDecoder)
+        (D.field "prime" Page.primeDecoder)
