@@ -5,6 +5,8 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Json.Decode as D
+import Json.Encode as E
 import Utils.Color as C
 
 
@@ -105,3 +107,22 @@ carbonate int =
 
     else
         Uncarbonated int
+
+
+
+-- ENCODE / DECODE --
+
+
+modelEncoder : Model -> E.Value
+modelEncoder model =
+    E.object
+        [ ( "slider", E.float model.slider )
+        , ( "sliderMax", E.float model.sliderMax )
+        ]
+
+
+modelDecoder : D.Decoder Model
+modelDecoder =
+    D.map2 Model
+        (D.field "slider" D.float)
+        (D.field "sliderMax" D.float)

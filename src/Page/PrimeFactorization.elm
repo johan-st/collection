@@ -4,11 +4,17 @@ import Arithmetic exposing (primeFactors)
 import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
+import Json.Decode as D
+import Json.Encode as E
 import Utils.Color as C
 
 
 type Msg
     = NumberChanged String
+
+
+
+-- TODO: Make versioned models
 
 
 type alias Model =
@@ -122,6 +128,15 @@ fact ( int, list ) =
         List.reverse list
 
 
-primes : List Int
-primes =
-    [ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31 ]
+
+-- ENCODE / DECODE --
+
+
+modelEncoder : Model -> E.Value
+modelEncoder model =
+    E.string model
+
+
+modelDecoder : D.Decoder Model
+modelDecoder =
+    D.string
