@@ -6,12 +6,13 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
+import Element.Input as Input
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
 import Page.Page as Page exposing (Page(..), fizzbuzzDecoder, numeralsDecoder, pageEncoder, primeDecoder)
 import Page.PrimeFactorization as Prime
-import Page.RomanNumerals as Numeral exposing (Numeral(..), numeralEncoder)
+import Page.RomanNumerals as Numeral exposing (Numeral(..))
 import Page.Visuals as Visuals
 import Task
 import Time
@@ -36,7 +37,9 @@ type alias Model =
 init : String -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        persist = initialPersistance flags
+        persist =
+            initialPersistance flags
+
         page =
             case url.path of
                 "/" ->
@@ -60,7 +63,7 @@ init flags url key =
     ( { key = key
       , url = url
       , page = page
-      , persistance = persist
+      , persistance = initialPersistance flags
       , time = Time.millisToPosix 0
       , zone = Time.utc
       }
@@ -72,15 +75,16 @@ initialPersistance : String -> Persist
 initialPersistance flags =
     case D.decodeString persistDecoder flags of
         Result.Err msg ->
-            let
-                debug =
-                    Debug.log ("decoder error in initial persistance: " ++ Debug.toString msg)
-            in
+            -- let
+            --     debug =
+            --         Debug.log ("decoder error in initial persistance: " ++ Debug.toString msg)
+            -- in
             { numerals = RomanNumerals (Numeral.Model "" [])
             , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
             , primeFactors = Page.PrimeFactorization ""
             }
-        Ok data -> 
+
+        Ok data ->
             data
 
 
@@ -104,17 +108,11 @@ type Msg
     | GotNumeralMsg Numeral.Msg
     | GotPrimeMsg Prime.Msg
     | GotVisualsMsg Visuals.Msg
+    | UpdateLocalStorage
+
+
 
 -- TODO Only update on change?
-updateWithStorage : Msg -> Model -> ( Model, Cmd Msg )
-updateWithStorage msg oldModel =
-    let
-        ( newModel, cmds ) =
-            update msg oldModel
-    in
-    ( newModel
-    , Cmd.batch [ setPersist (E.encode 1 (persistEncoder newModel.persistance)), cmds ]
-    )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -195,8 +193,11 @@ update msg model =
 
         AdjustTimeZone newZone ->
             ( { model | zone = newZone }
-            , log ("AdjustTimeZone: " ++ Debug.toString newZone)
+            , log "AdjustTimeZone"
             )
+
+        UpdateLocalStorage ->
+            ( model, setPersist (E.encode 1 (persistEncoder model.persistance)) )
 
 
 updateTime : Time.Posix -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -301,14 +302,19 @@ navBar model =
         [ width fill
         , BG.color C.darkBase3
         , spaceEvenly
-        , padding 5
+        , paddingXY 20 10
         ]
     <|
-        [ spacer 1
+        [ spacer 2
         , link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
         , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
         , link [ width fill ] { label = text "Prime Factorization", url = "/primes" }
         , link [ width fill ] { label = text "Visual Experimentation", url = "/visuals" }
+        , spacer 2
+        , Input.button [ Font.underline, Font.color C.accent2 ]
+            { onPress = Just UpdateLocalStorage
+            , label = text "save state"
+            }
         , spacer 1
         , el [ Font.color C.accent3 ] <| text (toTime model.zone model.time)
         ]
@@ -329,7 +335,7 @@ pageViewer model =
                     Numeral.view numeralModel |> Element.map GotNumeralMsg
 
                 Page.Diary ->
-                    Debug.todo "Implement Diary"
+                    landing
 
                 Page.NotFound_404 ->
                     notFound model.url
@@ -459,7 +465,7 @@ main =
     Browser.application
         { init = init
         , view = view
-        , update = updateWithStorage
+        , update = update
         , subscriptions = subscriptions
         , onUrlRequest = UrlRequested
         , onUrlChange = UrlChanged

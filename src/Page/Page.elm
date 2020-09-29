@@ -36,7 +36,7 @@ pageEncoder p =
             Prime.modelEncoder model
 
         _ ->
-            Debug.todo "Not implemented"
+            E.null
 
 
 fizzbuzzDecoder : D.Decoder Page
