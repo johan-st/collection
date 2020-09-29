@@ -1,7 +1,6 @@
 module Main exposing (..)
 
 import Browser
-import Browser.Events
 import Browser.Navigation as Nav
 import Element exposing (..)
 import Element.Background as BG
@@ -41,16 +40,16 @@ init _ url key =
                     Page.Landing
 
                 "/fizzbuzz" ->
-                    Page.FizzBuzz <| FizzBuzz.init 7
+                    initialPersistance.fizzbuzz
 
                 "/numerals" ->
-                    Page.RomanNumerals (Numeral.Model "" [])
+                    initialPersistance.numerals
 
                 "/visuals" ->
                     Page.Visuals Visuals.init
 
                 "/primes" ->
-                    Page.PrimeFactorization ""
+                    initialPersistance.primeFactors
 
                 _ ->
                     Page.NotFound_404
@@ -69,7 +68,7 @@ init _ url key =
 initialPersistance : Persist
 initialPersistance =
     { numerals = RomanNumerals (Numeral.Model "" [])
-    , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 0
+    , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
     , primeFactors = Page.PrimeFactorization ""
     }
 
@@ -185,7 +184,16 @@ updateTime time ( model, cmd ) =
 
 toPrime : Model -> ( Prime.Model, Cmd Prime.Msg ) -> ( Model, Cmd Msg )
 toPrime model ( primeModel, cmd ) =
-    ( { model | page = Page.PrimeFactorization primeModel }
+    let
+        newPrime =
+            Page.PrimeFactorization primeModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | primeFactors =  newPrime }              
+    in    ( { model | page = newPrime , persistance = newPersist }
     , Cmd.map GotPrimeMsg cmd
     )
 
@@ -199,7 +207,16 @@ toVisuals model ( visModel, cmd ) =
 
 toNumeral : Model -> ( Numeral.Model, Cmd Numeral.Msg ) -> ( Model, Cmd Msg )
 toNumeral model ( numModel, cmd ) =
-    ( { model | page = Page.RomanNumerals numModel }
+    let
+        newNumeral =
+            Page.RomanNumerals numModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | numerals = newNumeral }
+    in    ( { model | page = newNumeral, persistance = newPersist  }
     , Cmd.map GotNumeralMsg cmd
     )
 
@@ -337,7 +354,10 @@ landing =
 
 
 -- PAGE-VIEW -- notFound
-
+--   https://example.com:8042/over/there?name=ferret#nose
+--   \___/   \______________/\_________/ \_________/ \__/
+--     |            |            |            |        |
+--   scheme     authority       path        query   fragment
 
 notFound : Url.Url -> Element Msg
 notFound url =
@@ -360,11 +380,6 @@ notFound url =
         ]
 
 
-
---   https://example.com:8042/over/there?name=ferret#nose
---   \___/   \______________/\_________/ \_________/ \__/
---     |            |            |            |        |
---   scheme     authority       path        query   fragment
 -- PAGE-VIEW -- extras
 
 

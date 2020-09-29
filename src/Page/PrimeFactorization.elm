@@ -16,7 +16,7 @@ type alias Model =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg _ =
     case msg of
         NumberChanged numberInput ->
             case String.toInt numberInput of

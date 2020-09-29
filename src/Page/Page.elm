@@ -17,11 +17,11 @@ type Page
     | NotFound_404
 
 
-toFizzBuzzModel : Page -> FizzBuzz.Model
-toFizzBuzzModel page =
-    case page of
-        FizzBuzz model ->
-            model
+-- toFizzBuzzModel : Page -> FizzBuzz.Model
+-- toFizzBuzzModel page =
+--     case page of
+--         FizzBuzz model ->
+--             model
 
-        _ ->
-            Debug.todo "toFizzBuzzModel called with non-fizbuzz page"
+--         _ ->
+--             Debug.todo "toFizzBuzzModel called with non-fizbuzz page"
