@@ -230,9 +230,9 @@ numHelper num =
         "V" ->
             D.succeed V
 
-        --   commented out for testing purposes
-        -- "I" ->
-        --   D.succeed I
+        "I" ->
+            D.succeed I
+
         _ ->
             D.fail <|
                 "Trying to decode a Numeral, but "

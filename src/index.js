@@ -11,7 +11,7 @@ const app = Elm.Main.init({
   flags
 });
 
-app.ports.log.subscribe(log => console.log(log));
+app.ports.log.subscribe(log => console.log("elm-log-port:\n", log));
 
 // // Listen for commands from the `setStorage` port.
 // // Turn the data to a string and put it in localStorage.

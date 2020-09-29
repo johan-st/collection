@@ -5,7 +5,7 @@ import Json.Decode as D
 import Json.Encode as E
 import Page.FizzBuzz as FizzBuzz
 import Page.PrimeFactorization as Prime
-import Page.RomanNumerals as Numerals exposing (numeralEncoder)
+import Page.RomanNumerals as Numerals
 import Page.Visuals as Visuals
 
 

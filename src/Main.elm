@@ -67,18 +67,14 @@ init flags url key =
       , time = Time.millisToPosix 0
       , zone = Time.utc
       }
-    , Cmd.batch [ Task.perform AdjustTimeZone Time.here, Task.perform Tick Time.now, log flags ]
+    , Cmd.batch [ Task.perform AdjustTimeZone Time.here, Task.perform Tick Time.now, log ("flags on init:\n" ++ flags) ]
     )
 
 
 initialPersistance : String -> Persist
 initialPersistance flags =
     case D.decodeString persistDecoder flags of
-        Result.Err msg ->
-            let
-                debug =
-                    Debug.log ("decoder error in initial persistance: " ++ Debug.toString msg)
-            in
+        Result.Err _ ->
             { numerals = RomanNumerals (Numeral.Model "" [])
             , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
             , primeFactors = Page.PrimeFactorization ""
@@ -111,16 +107,8 @@ type Msg
     | UpdateLocalStorage
 
 
-
--- TODO Only update on change?
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    -- let
-    --     debug =
-    --         Debug.log "update" <| Debug.toString msg
-    -- in
     case msg of
         UrlRequested urlRequest ->
             case urlRequest of
@@ -144,13 +132,11 @@ update msg model =
                             model.persistance.numerals
 
                         "/visuals" ->
-                            Page.NotFound_404
+                            Page.Visuals ""
 
-                        -- Page.Visuals ""
                         "/primes" ->
-                            Page.NotFound_404
+                            model.persistance.primeFactors
 
-                        -- model.persistance.primeFactors
                         _ ->
                             Page.NotFound_404
             in
