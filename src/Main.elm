@@ -6,13 +6,14 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
+import Element.Input as Input exposing (search)
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
 import Page.Page as Page exposing (Page(..), fizzbuzzDecoder, numeralsDecoder, pageEncoder, primeDecoder)
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numeral exposing (Numeral(..))
+import Page.Search as Search
 import Page.Visuals as Visuals
 import Task
 import Time
@@ -56,6 +57,9 @@ init flags url key =
 
                 "/primes" ->
                     persist.primeFactors
+
+                "/search" ->
+                    Page.Search <| Search.init url
 
                 _ ->
                     Page.NotFound_404
@@ -104,6 +108,7 @@ type Msg
     | GotNumeralMsg Numeral.Msg
     | GotPrimeMsg Prime.Msg
     | GotVisualsMsg Visuals.Msg
+    | GotSearchMsg Search.Msg
     | UpdateLocalStorage
 
 
@@ -136,6 +141,9 @@ update msg model =
 
                         "/primes" ->
                             model.persistance.primeFactors
+
+                        "/search" ->
+                            Page.Search (Search.init model.url)
 
                         _ ->
                             Page.NotFound_404
@@ -172,6 +180,14 @@ update msg model =
             case model.page of
                 Page.Visuals visModel ->
                     toVisuals model (Visuals.update visMsg visModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotSearchMsg searchMsg ->
+            case model.page of
+                Page.Search searchModel ->
+                    toSearch model (Search.update searchMsg searchModel)
 
                 _ ->
                     ( model, Cmd.none )
@@ -251,6 +267,11 @@ toFizzBuzz model ( fizzBuzzModel, cmd ) =
     )
 
 
+toSearch : Model -> ( Search.Model, Cmd Search.Msg ) -> ( Model, Cmd Msg )
+toSearch model ( searchModel, cmd ) =
+    ( { model | page = Page.Search searchModel }, Cmd.map GotSearchMsg cmd )
+
+
 
 ---- VIEW ----
 
@@ -298,6 +319,7 @@ navBar model =
         , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
         , link [ width fill ] { label = text "Prime Factorization", url = "/primes" }
         , link [ width fill ] { label = text "Visual Experimentation", url = "/visuals" }
+        , link [ width fill ] { label = text "Search", url = "/search" }
         , spacer 2
         , Input.button [ Font.underline, Font.color C.accent2 ]
             { onPress = Just UpdateLocalStorage
@@ -306,6 +328,10 @@ navBar model =
         , spacer 1
         , el [ Font.color C.accent3 ] <| text (toTime model.zone model.time)
         ]
+
+
+
+-- VIEWS --
 
 
 pageViewer : Model -> Element Msg
@@ -333,6 +359,9 @@ pageViewer model =
 
                 Page.PrimeFactorization num ->
                     Prime.view num |> Element.map GotPrimeMsg
+
+                Page.Search pageModel ->
+                    Search.view pageModel |> Element.map GotSearchMsg
     in
     row
         [ width fill

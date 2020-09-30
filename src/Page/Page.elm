@@ -6,7 +6,9 @@ import Json.Encode as E
 import Page.FizzBuzz as FizzBuzz
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numerals
+import Page.Search as Search
 import Page.Visuals as Visuals
+import Url exposing (Url)
 
 
 type Page
@@ -16,6 +18,7 @@ type Page
     | PrimeFactorization Prime.Model
     | Visuals Visuals.Model
     | Diary
+    | Search Search.Model
     | NotFound_404
 
 
