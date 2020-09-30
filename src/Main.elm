@@ -28,7 +28,7 @@ type alias Model =
     { key : Nav.Key
     , url : Url.Url
     , page : Page
-    , persistance : Persist
+    , persistance : Persist20200929
     , time : Time.Posix
     , zone : Time.Zone
     }
@@ -71,7 +71,7 @@ init flags url key =
     )
 
 
-initialPersistance : String -> Persist
+initialPersistance : String -> Persist20200929
 initialPersistance flags =
     case D.decodeString persistDecoder flags of
         Result.Err _ ->
@@ -84,7 +84,7 @@ initialPersistance flags =
             data
 
 
-type alias Persist =
+type alias Persist20200929 =
     { fizzbuzz : Page
     , numerals : Page
     , primeFactors : Page
@@ -483,19 +483,35 @@ port setPersist : String -> Cmd msg
 -- ENCODE / DECODE --
 
 
-persistEncoder : Persist -> E.Value
+persistEncoder : Persist20200929 -> E.Value
 persistEncoder p =
     E.object
-        [ ( "storeVersion", E.string "v_2020-9-29" )
+        [ ( "storeVersion", E.string "v20200929" )
         , ( "fizzbuzz", pageEncoder p.fizzbuzz )
         , ( "numerals", pageEncoder p.numerals )
         , ( "prime", pageEncoder p.primeFactors )
         ]
 
 
-persistDecoder : D.Decoder Persist
+persistDecoder : D.Decoder Persist20200929
 persistDecoder =
-    D.map3 Persist
+    D.field "storeVersion" D.string
+        |> D.andThen persistDecoderHelper
+
+
+persistDecoderHelper : String -> D.Decoder Persist20200929
+persistDecoderHelper versionString =
+    case versionString of
+        "v20200929" ->
+            persist20200929Decoder
+
+        _ ->
+            D.fail "unhandled version"
+
+
+persist20200929Decoder : D.Decoder Persist20200929
+persist20200929Decoder =
+    D.map3 Persist20200929
         (D.field "fizzbuzz" Page.fizzbuzzDecoder)
         (D.field "numerals" Page.numeralsDecoder)
         (D.field "prime" Page.primeDecoder)
