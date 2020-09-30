@@ -39,10 +39,10 @@ update msg model =
 
 view : Model -> Element Msg
 view model =
-    column [ width fill ]
-        [ text "Find Things"
-        , text "not implemented yet"
-        , row [ width fill, spacing 30, paddingXY 30 10 ]
+    column [ width fill, padding 30, spacing 20 ]
+        [ el [ Font.color C.accent2, centerX, Font.size 60 ] <| text "ThingsFinder"
+        , el [ Font.color C.accent4, alignRight ] <| text "not implemented yet"
+        , row [ width fill, spacing 30 ]
             [ Input.search []
                 { onChange = InputChanged
                 , text = model.input
@@ -54,7 +54,7 @@ view model =
                 , Border.innerGlow C.accent3 3
                 ]
                 { onPress = Just SearchClicked
-                , label = text "My Button"
+                , label = text "TF me!"
                 }
             ]
         ]
