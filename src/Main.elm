@@ -6,17 +6,19 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
+import Element.Input as Input exposing (search)
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
 import Page.Page as Page exposing (Page(..), fizzbuzzDecoder, numeralsDecoder, pageEncoder, primeDecoder)
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numeral exposing (Numeral(..))
+import Page.Search as Search
 import Page.Visuals as Visuals
 import Task
 import Time
 import Url
+import Url.Builder
 import Utils.Color as C
 
 
@@ -28,7 +30,7 @@ type alias Model =
     { key : Nav.Key
     , url : Url.Url
     , page : Page
-    , persistance : Persist
+    , persistance : Persist20200929
     , time : Time.Posix
     , zone : Time.Zone
     }
@@ -57,6 +59,9 @@ init flags url key =
                 "/primes" ->
                     persist.primeFactors
 
+                "/search" ->
+                    Page.Search <| Search.init url
+
                 _ ->
                     Page.NotFound_404
     in
@@ -71,7 +76,7 @@ init flags url key =
     )
 
 
-initialPersistance : String -> Persist
+initialPersistance : String -> Persist20200929
 initialPersistance flags =
     case D.decodeString persistDecoder flags of
         Result.Err _ ->
@@ -84,7 +89,7 @@ initialPersistance flags =
             data
 
 
-type alias Persist =
+type alias Persist20200929 =
     { fizzbuzz : Page
     , numerals : Page
     , primeFactors : Page
@@ -104,6 +109,7 @@ type Msg
     | GotNumeralMsg Numeral.Msg
     | GotPrimeMsg Prime.Msg
     | GotVisualsMsg Visuals.Msg
+    | GotSearchMsg Search.Msg
     | UpdateLocalStorage
 
 
@@ -136,6 +142,9 @@ update msg model =
 
                         "/primes" ->
                             model.persistance.primeFactors
+
+                        "/search" ->
+                            Page.Search (Search.init model.url)
 
                         _ ->
                             Page.NotFound_404
@@ -172,6 +181,23 @@ update msg model =
             case model.page of
                 Page.Visuals visModel ->
                     toVisuals model (Visuals.update visMsg visModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotSearchMsg searchMsg ->
+            case model.page of
+                Page.Search searchModel ->
+                    case searchMsg of
+                        Search.SearchClicked ->
+                            toSearch model
+                                (Nav.pushUrl model.key (Url.Builder.relative [] [ Url.Builder.string "q" (Search.toString searchModel.search) ]))
+                                (Search.update searchMsg searchModel)
+
+                        Search.InputChanged _ ->
+                            toSearch model
+                                Cmd.none
+                                (Search.update searchMsg searchModel)
 
                 _ ->
                     ( model, Cmd.none )
@@ -251,6 +277,13 @@ toFizzBuzz model ( fizzBuzzModel, cmd ) =
     )
 
 
+toSearch : Model -> Cmd Msg -> ( Search.Model, Cmd Search.Msg ) -> ( Model, Cmd Msg )
+toSearch model mainCmd ( searchModel, cmd ) =
+    ( { model | page = Page.Search searchModel }
+    , Cmd.batch [ Cmd.map GotSearchMsg cmd, mainCmd ]
+    )
+
+
 
 ---- VIEW ----
 
@@ -298,6 +331,7 @@ navBar model =
         , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
         , link [ width fill ] { label = text "Prime Factorization", url = "/primes" }
         , link [ width fill ] { label = text "Visual Experimentation", url = "/visuals" }
+        , link [ width fill ] { label = text "Search", url = "/search" }
         , spacer 2
         , Input.button [ Font.underline, Font.color C.accent2 ]
             { onPress = Just UpdateLocalStorage
@@ -306,6 +340,10 @@ navBar model =
         , spacer 1
         , el [ Font.color C.accent3 ] <| text (toTime model.zone model.time)
         ]
+
+
+
+-- VIEWS --
 
 
 pageViewer : Model -> Element Msg
@@ -333,6 +371,9 @@ pageViewer model =
 
                 Page.PrimeFactorization num ->
                     Prime.view num |> Element.map GotPrimeMsg
+
+                Page.Search pageModel ->
+                    Search.view pageModel |> Element.map GotSearchMsg
     in
     row
         [ width fill
@@ -465,7 +506,7 @@ main =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Time.every 1000 Tick
 
 
@@ -483,19 +524,35 @@ port setPersist : String -> Cmd msg
 -- ENCODE / DECODE --
 
 
-persistEncoder : Persist -> E.Value
+persistEncoder : Persist20200929 -> E.Value
 persistEncoder p =
     E.object
-        [ ( "storeVersion", E.string "v_2020-9-29" )
+        [ ( "storeVersion", E.string "v20200929" )
         , ( "fizzbuzz", pageEncoder p.fizzbuzz )
         , ( "numerals", pageEncoder p.numerals )
         , ( "prime", pageEncoder p.primeFactors )
         ]
 
 
-persistDecoder : D.Decoder Persist
+persistDecoder : D.Decoder Persist20200929
 persistDecoder =
-    D.map3 Persist
+    D.field "storeVersion" D.string
+        |> D.andThen persistDecoderHelper
+
+
+persistDecoderHelper : String -> D.Decoder Persist20200929
+persistDecoderHelper versionString =
+    case versionString of
+        "v20200929" ->
+            persist20200929Decoder
+
+        _ ->
+            D.fail "unhandled version"
+
+
+persist20200929Decoder : D.Decoder Persist20200929
+persist20200929Decoder =
+    D.map3 Persist20200929
         (D.field "fizzbuzz" Page.fizzbuzzDecoder)
         (D.field "numerals" Page.numeralsDecoder)
         (D.field "prime" Page.primeDecoder)

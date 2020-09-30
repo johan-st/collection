@@ -19,7 +19,6 @@ type Soda
 
 type alias Model =
     { slider : Float
-    , sliderMax : Float
     }
 
 
@@ -30,7 +29,6 @@ type Msg
 init : Float -> Model
 init slider =
     { slider = slider
-    , sliderMax = 10
     }
 
 
@@ -43,10 +41,6 @@ update msg model =
 
 view : Model -> Element Msg
 view model =
-    let
-        sliderMax =
-            model.slider + 100
-    in
     column [ width fill ]
         [ el
             [ centerX
@@ -66,7 +60,7 @@ view model =
             { onChange = SliderMoved
             , label = Input.labelLeft [ paddingXY 5 15 ] <| text "How fizzy you ask?"
             , min = 0
-            , max = sliderMax
+            , max = model.slider + 100
             , value = model.slider
             , thumb = Input.defaultThumb
             , step = Just 1
@@ -117,12 +111,10 @@ modelEncoder : Model -> E.Value
 modelEncoder model =
     E.object
         [ ( "slider", E.float model.slider )
-        , ( "sliderMax", E.float model.sliderMax )
         ]
 
 
 modelDecoder : D.Decoder Model
 modelDecoder =
-    D.map2 Model
+    D.map Model
         (D.field "slider" D.float)
-        (D.field "sliderMax" D.float)

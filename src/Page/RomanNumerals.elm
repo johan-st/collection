@@ -238,8 +238,3 @@ numHelper num =
                 "Trying to decode a Numeral, but "
                     ++ num
                     ++ " is not a valid one."
-
-
-
--- infoDecoder4 : Decoder Info
--- infoDecoder3 : Decoder Info
