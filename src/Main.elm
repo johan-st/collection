@@ -18,6 +18,7 @@ import Page.Visuals as Visuals
 import Task
 import Time
 import Url
+import Url.Builder
 import Utils.Color as C
 
 
@@ -187,7 +188,16 @@ update msg model =
         GotSearchMsg searchMsg ->
             case model.page of
                 Page.Search searchModel ->
-                    toSearch model (Search.update searchMsg searchModel)
+                    case searchMsg of
+                        Search.SearchClicked ->
+                            toSearch model
+                                (Nav.pushUrl model.key (Url.Builder.relative [] [ Url.Builder.string "q" (Search.toString searchModel.search) ]))
+                                (Search.update searchMsg searchModel)
+
+                        Search.InputChanged _ ->
+                            toSearch model
+                                Cmd.none
+                                (Search.update searchMsg searchModel)
 
                 _ ->
                     ( model, Cmd.none )
@@ -267,9 +277,11 @@ toFizzBuzz model ( fizzBuzzModel, cmd ) =
     )
 
 
-toSearch : Model -> ( Search.Model, Cmd Search.Msg ) -> ( Model, Cmd Msg )
-toSearch model ( searchModel, cmd ) =
-    ( { model | page = Page.Search searchModel }, Cmd.map GotSearchMsg cmd )
+toSearch : Model -> Cmd Msg -> ( Search.Model, Cmd Search.Msg ) -> ( Model, Cmd Msg )
+toSearch model mainCmd ( searchModel, cmd ) =
+    ( { model | page = Page.Search searchModel }
+    , Cmd.batch [ Cmd.map GotSearchMsg cmd, mainCmd ]
+    )
 
 
 
@@ -494,7 +506,7 @@ main =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Time.every 1000 Tick
 
 
