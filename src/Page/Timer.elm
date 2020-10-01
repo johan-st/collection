@@ -19,8 +19,8 @@ type alias Timer =
 defaultTimer : Timer
 defaultTimer =
     { name = "timer"
-    , length = 600
-    , timePassed = 0
+    , length = 10
+    , timePassed = 1
     }
 
 
@@ -33,12 +33,17 @@ type Model
 
 init : Model
 init =
-    Running (List.repeat 2 defaultTimer) defaultTimer (List.repeat 2 defaultTimer)
+    Running (List.repeat 10 defaultTimer) defaultTimer (List.repeat 0 defaultTimer)
 
 
 type Msg
     = Tick Posix
     | StartPauseClicked
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Time.every 1000 Tick
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -66,11 +71,6 @@ update msg model =
 
         StartPauseClicked ->
             ( model, Cmd.none )
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Time.every 10 Tick
 
 
 playPause : Model -> Model
