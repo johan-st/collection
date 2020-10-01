@@ -190,8 +190,13 @@ update msg model =
                 Page.Search searchModel ->
                     case searchMsg of
                         Search.SearchClicked ->
+                            let
+                                newUrl =
+                                    Url.Builder.relative []
+                                        [ Url.Builder.string "q" (Search.toString searchModel.search) ]
+                            in
                             toSearch model
-                                (Nav.pushUrl model.key (Url.Builder.relative [] [ Url.Builder.string "q" (Search.toString searchModel.search) ]))
+                                (Nav.pushUrl model.key newUrl)
                                 (Search.update searchMsg searchModel)
 
                         Search.InputChanged _ ->

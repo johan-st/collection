@@ -6,7 +6,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (search)
 import Html exposing (input)
-import Url
+import Url exposing (Url)
 import Utils.Color as C
 
 
@@ -90,6 +90,9 @@ view model =
 queryResult : Model -> Element Msg
 queryResult model =
     case model.search of
+        Empty ->
+            text <| "Please enter a search term."
+
         Uncommited string ->
             text <| "press \"TF me\" to search for " ++ string ++ "."
 
@@ -99,8 +102,19 @@ queryResult model =
         Resolved ->
             text <| "here you will have results "
 
-        Empty ->
-            text <| "Please enter a search term."
+
+queryDisplay : Url.Url -> Element Msg
+queryDisplay url =
+    let
+        query =
+            case url.query of
+                Nothing ->
+                    ""
+
+                Just qString ->
+                    qString
+    in
+    el [] <| column [ Font.size 60 ] [ text query ]
 
 
 
@@ -108,5 +122,5 @@ queryResult model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
