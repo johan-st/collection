@@ -1,6 +1,8 @@
 module Page.Timer exposing (..)
 
 import Element exposing (..)
+import Element.Background as BG
+import Element.Border as Border
 import Element.Font as Font
 import Page.PrimeFactorization exposing (modelEncoder)
 import Time exposing (Posix)
@@ -17,7 +19,7 @@ type alias Timer =
 defaultTimer : Timer
 defaultTimer =
     { name = "timer"
-    , length = 3600
+    , length = 600
     , timePassed = 0
     }
 
@@ -45,7 +47,19 @@ update msg model =
         Tick time ->
             case model of
                 Running que active done ->
-                    ( Running que { active | timePassed = active.timePassed + 1 } done, Cmd.none )
+                    let
+                        newElapsed =
+                            active.timePassed + 1
+                    in
+                    if timeLeft active > 0 then
+                        ( Running que { active | timePassed = newElapsed } done, Cmd.none )
+
+                    else
+                        let
+                            ( newQue, newActive, newDone ) =
+                                tryShiftForward ( que, active, done )
+                        in
+                        ( Running newQue newActive newDone, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -56,7 +70,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every 1000 Tick
+    Time.every 10 Tick
 
 
 playPause : Model -> Model
@@ -115,9 +129,12 @@ activeMain t =
         [ Font.color C.accent2
         , Font.size 60
         , width <| fillPortion 3
+        , Border.innerGlow C.accent2 10
+        , padding 10
+        , Border.rounded 50
+        , BG.color C.darkBase1
         ]
         [ el [ centerX ] <| text <| t.name
-        , el [ centerX ] <| text <| timeToString t.length
         , el [ centerX ] <| text <| timeToString <| timeLeft t
         ]
 
@@ -128,9 +145,12 @@ pausedMain t =
         [ Font.color C.accent3
         , Font.size 60
         , width <| fillPortion 3
+        , Border.innerGlow C.accent3 10
+        , padding 10
+        , Border.rounded 50
+        , BG.color C.darkBase1
         ]
         [ el [ centerX ] <| text <| t.name
-        , el [ centerX ] <| text <| timeToString t.length
         , el [ centerX ] <| text <| timeToString <| timeLeft t
         ]
 
@@ -153,7 +173,7 @@ queView que =
     row
         [ Font.color C.accent4
         , width <| fillPortion 1
-        , spaceEvenly
+        , spacing 5
         ]
     <|
         List.map timerListItem que
@@ -161,10 +181,14 @@ queView que =
 
 timerListItem : Timer -> Element Msg
 timerListItem t =
-    column []
+    column
+        [ Border.innerGlow C.accent4 2
+        , padding 5
+        , Border.rounded 10
+        , BG.color C.darkBase1
+        ]
         [ el [ centerX ] <| text <| t.name
-        , el [ centerX ] <| text <| String.fromInt t.length
-        , el [ centerX ] <| text <| String.fromInt <| timeLeft t
+        , el [ centerX ] <| text <| timeToString t.length
         ]
 
 
@@ -184,3 +208,23 @@ timeToString timeInSecs =
             Debug.log "sec" sec
     in
     min ++ ":" ++ sec
+
+
+tryShiftForward : ( List Timer, Timer, List Timer ) -> ( List Timer, Timer, List Timer )
+tryShiftForward ( que, active, done ) =
+    let
+        maybeActive =
+            List.head que
+
+        shorterTail =
+            Maybe.withDefault [] <| List.tail que
+
+        newDone =
+            active :: done
+    in
+    case maybeActive of
+        Just activeTimer ->
+            ( shorterTail, activeTimer, newDone )
+
+        Nothing ->
+            ( que, active, done )
