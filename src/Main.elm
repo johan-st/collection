@@ -14,6 +14,7 @@ import Page.Page as Page exposing (Page(..), fizzbuzzDecoder, numeralsDecoder, p
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numeral exposing (Numeral(..))
 import Page.Search as Search
+import Page.Timer as Timer
 import Page.Visuals as Visuals
 import Task
 import Time
@@ -110,6 +111,7 @@ type Msg
     | GotPrimeMsg Prime.Msg
     | GotVisualsMsg Visuals.Msg
     | GotSearchMsg Search.Msg
+    | GotTimerMsg Timer.Msg
     | UpdateLocalStorage
 
 
@@ -145,6 +147,9 @@ update msg model =
 
                         "/search" ->
                             Page.Search (Search.init model.url)
+
+                        "/timer" ->
+                            Page.Timer Timer.init
 
                         _ ->
                             Page.NotFound_404
@@ -203,6 +208,14 @@ update msg model =
                             toSearch model
                                 Cmd.none
                                 (Search.update searchMsg searchModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotTimerMsg timerMsg ->
+            case model.page of
+                Page.Timer timerModel ->
+                    toTimer model (Timer.update timerMsg timerModel)
 
                 _ ->
                     ( model, Cmd.none )
@@ -289,6 +302,13 @@ toSearch model mainCmd ( searchModel, cmd ) =
     )
 
 
+toTimer : Model -> ( Timer.Model, Cmd Timer.Msg ) -> ( Model, Cmd Msg )
+toTimer model ( searchModel, cmd ) =
+    ( { model | page = Page.Timer searchModel }
+    , Cmd.map GotTimerMsg cmd
+    )
+
+
 
 ---- VIEW ----
 
@@ -331,13 +351,12 @@ navBar model =
         , paddingXY 20 10
         ]
     <|
-        [ spacer 2
-        , link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
+        [ link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
         , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
         , link [ width fill ] { label = text "Prime Factorization", url = "/primes" }
-        , link [ width fill ] { label = text "Visual Experimentation", url = "/visuals" }
+        , link [ width fill ] { label = text "Visuals", url = "/visuals" }
+        , link [ width fill ] { label = text "Timer", url = "/timer" }
         , link [ width fill ] { label = text "Search", url = "/search" }
-        , spacer 2
         , Input.button [ Font.underline, Font.color C.accent2 ]
             { onPress = Just UpdateLocalStorage
             , label = text "save state"
@@ -379,6 +398,9 @@ pageViewer model =
 
                 Page.Search pageModel ->
                     Search.view pageModel |> Element.map GotSearchMsg
+
+                Page.Timer timerModel ->
+                    Timer.view timerModel |> Element.map GotTimerMsg
     in
     row
         [ width fill

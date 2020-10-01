@@ -7,6 +7,7 @@ import Page.FizzBuzz as FizzBuzz
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numerals
 import Page.Search as Search
+import Page.Timer as Timer
 import Page.Visuals as Visuals
 import Url exposing (Url)
 
@@ -18,6 +19,7 @@ type Page
     | PrimeFactorization Prime.Model
     | Visuals Visuals.Model
     | Diary
+    | Timer Timer.Model
     | Search Search.Model
     | NotFound_404
 
