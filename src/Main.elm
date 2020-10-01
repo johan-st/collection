@@ -63,6 +63,9 @@ init flags url key =
                 "/search" ->
                     Page.Search <| Search.init url
 
+                "/timer" ->
+                    Page.Timer <| Timer.init
+
                 _ ->
                     Page.NotFound_404
     in
@@ -349,6 +352,7 @@ navBar model =
         , BG.color C.darkBase3
         , spaceEvenly
         , paddingXY 20 10
+        , Font.underline
         ]
     <|
         [ link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
@@ -362,7 +366,7 @@ navBar model =
             , label = text "save state"
             }
         , spacer 1
-        , el [ Font.color C.accent3 ] <| text (toTime model.zone model.time)
+        , el [ Font.color C.accent3, Font.family [ Font.monospace ] ] <| text (toTime model.zone model.time)
         ]
 
 
@@ -534,7 +538,12 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every 1000 Tick
+    case model.page of
+        Page.Timer timerModel ->
+            Sub.batch [ Time.every 1000 Tick, Sub.map GotTimerMsg (Timer.subscriptions timerModel) ]
+
+        _ ->
+            Time.every 1000 Tick
 
 
 
