@@ -4,7 +4,7 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
-import Page.PrimeFactorization exposing (modelEncoder)
+import Element.Input as Input
 import Time exposing (Posix)
 import Utils.Color as C
 
@@ -70,7 +70,7 @@ update msg model =
                     ( model, Cmd.none )
 
         StartPauseClicked ->
-            ( model, Cmd.none )
+            ( playPause model, Cmd.none )
 
 
 playPause : Model -> Model
@@ -93,31 +93,48 @@ view : Model -> Element Msg
 view model =
     case model of
         Stopped que active ->
-            row
-                [ paddingXY 30 100
-                , width fill
-                , spacing 10
+            column []
+                [ row
+                    [ paddingXY 30 100
+                    , width fill
+                    , spacing 10
+                    ]
+                    [ queView que, pausedMain active ]
+                , Input.button []
+                    { onPress = Just StartPauseClicked
+                    , label = el [ Font.size 60 ] <| text <| "play/pause"
+                    }
                 ]
-            <|
-                [ queView que, pausedMain active ]
 
         Paused que active done ->
-            row
-                [ paddingXY 15 100
-                , width fill
-                , spacing 10
+            column []
+                [ row
+                    [ paddingXY 15 100
+                    , width fill
+                    , spacing 10
+                    ]
+                  <|
+                    [ queView que, pausedMain active, queView done ]
+                , Input.button []
+                    { onPress = Just StartPauseClicked
+                    , label = el [ Font.size 60 ] <| text <| "play/pause"
+                    }
                 ]
-            <|
-                [ queView que, pausedMain active, queView done ]
 
         Running que active done ->
-            row
-                [ paddingXY 15 100
-                , width fill
-                , spacing 10
+            column []
+                [ row
+                    [ paddingXY 15 100
+                    , width fill
+                    , spacing 10
+                    ]
+                  <|
+                    [ queView que, activeMain active, queView done ]
+                , Input.button []
+                    { onPress = Just StartPauseClicked
+                    , label = el [ Font.size 60 ] <| text <| "play/pause"
+                    }
                 ]
-            <|
-                [ queView que, activeMain active, queView done ]
 
         _ ->
             Debug.todo "Timer model view cases"
@@ -130,7 +147,7 @@ activeMain t =
         , Font.size 60
         , width <| fillPortion 3
         , Border.innerGlow C.accent2 10
-        , padding 10
+        , padding 30
         , Border.rounded 50
         , BG.color C.darkBase1
         ]
@@ -146,7 +163,7 @@ pausedMain t =
         , Font.size 60
         , width <| fillPortion 3
         , Border.innerGlow C.accent3 10
-        , padding 10
+        , padding 30
         , Border.rounded 50
         , BG.color C.darkBase1
         ]
