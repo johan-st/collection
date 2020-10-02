@@ -352,15 +352,14 @@ navBar model =
         , BG.color C.darkBase3
         , spaceEvenly
         , paddingXY 20 10
-        , Font.underline
         ]
     <|
-        [ link [ width fill ] { label = text "fizzBuzz", url = "/fizzbuzz" }
-        , link [ width fill ] { label = text "Roman Numerals", url = "/numerals" }
-        , link [ width fill ] { label = text "Prime Factorization", url = "/primes" }
-        , link [ width fill ] { label = text "Visuals", url = "/visuals" }
-        , link [ width fill ] { label = text "Timer", url = "/timer" }
-        , link [ width fill ] { label = text "Search", url = "/search" }
+        [ link [ width fill, Font.underline ] { label = text "fizzBuzz", url = "/fizzbuzz" }
+        , link [ width fill, Font.underline ] { label = text "Roman Numerals", url = "/numerals" }
+        , link [ width fill, Font.underline ] { label = text "Prime Factorization", url = "/primes" }
+        , link [ width fill, Font.underline ] { label = text "Visuals", url = "/visuals" }
+        , link [ width fill, Font.underline ] { label = text "Timer", url = "/timer" }
+        , link [ width fill, Font.underline ] { label = text "Search", url = "/search" }
         , Input.button [ Font.underline, Font.color C.accent2 ]
             { onPress = Just UpdateLocalStorage
             , label = text "save state"
