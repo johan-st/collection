@@ -5,6 +5,7 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Events exposing (onClick)
 import Element.Font as Font
+import Page.PrimeFactorization exposing (Model)
 import Time exposing (Posix)
 import Utils.Color as C
 
@@ -16,11 +17,11 @@ type alias Timer =
     }
 
 
-defaultTimer : Timer
-defaultTimer =
-    { name = "timer"
-    , length = 120
-    , timePassed = 1
+defaultTimer : String -> Int -> Timer
+defaultTimer s i =
+    { name = s
+    , length = i
+    , timePassed = 0
     }
 
 
@@ -33,12 +34,36 @@ type Model
 
 init : Model
 init =
-    Running (List.repeat 2 defaultTimer) defaultTimer (List.repeat 1 defaultTimer)
+    Running
+        [ { name = "t1"
+          , length = 60
+          , timePassed = 0
+          }
+        , { name = "t2"
+          , length = 60
+          , timePassed = 0
+          }
+        , { name = "t3"
+          , length = 60
+          , timePassed = 0
+          }
+        , { name = "t4"
+          , length = 60
+          , timePassed = 0
+          }
+        ]
+        (defaultTimer
+            "act"
+            60
+        )
+        []
 
 
 type Msg
     = Tick Posix
     | StartPauseClicked
+    | QueTimerClicked Int
+    | DoneTimerClicked Int
 
 
 subscriptions : Model -> Sub Msg
@@ -71,6 +96,12 @@ update msg model =
 
         StartPauseClicked ->
             ( playPause model, Cmd.none )
+
+        QueTimerClicked i ->
+            ( reccTryShiftForward i model, Cmd.none )
+
+        DoneTimerClicked i ->
+            ( reccTryShiftBackwardsEntry i model, Cmd.none )
 
 
 playPause : Model -> Model
@@ -108,18 +139,18 @@ view model =
 timersView : Color -> List Timer -> Timer -> List Timer -> Element Msg
 timersView color que active done =
     column [ centerX ]
-        [ row
+        [ wrappedRow
             [ paddingXY 15 100
             , width fill
             , spacing 10
             ]
           <|
-            [ queView que, activeMain color active, doneView done ]
+            [ queView que, activeTimer color active, doneView done ]
         ]
 
 
-activeMain : Color -> Timer -> Element Msg
-activeMain color t =
+activeTimer : Color -> Timer -> Element Msg
+activeTimer color t =
     el
         [ Font.color color
         , Font.size 60
@@ -130,6 +161,7 @@ activeMain color t =
         , Border.rounded 50
         , BG.color C.darkBase1
         , onClick StartPauseClicked
+        , centerX
         ]
         (column
             [ mouseOver [ Border.glow color 10 ]
@@ -146,22 +178,6 @@ activeMain color t =
                         timeLeft t
             ]
         )
-
-
-pausedMain : Timer -> Element Msg
-pausedMain t =
-    column
-        [ Font.color C.accent3
-        , Font.size 60
-        , width <| fillPortion 3
-        , Border.innerGlow C.accent3 10
-        , padding 30
-        , Border.rounded 50
-        , BG.color C.darkBase1
-        ]
-        [ el [ centerX ] <| text <| t.name
-        , el [ centerX ] <| text <| timeToString <| timeLeft t
-        ]
 
 
 timeLeft : Timer -> Int
@@ -185,7 +201,8 @@ queView que =
         , spacing 5
         ]
     <|
-        List.map (timerListItem C.accent4) que
+        List.indexedMap (queListItem C.accent4) <|
+            List.reverse que
 
 
 doneView : List Timer -> Element Msg
@@ -196,20 +213,11 @@ doneView que =
         , spacing 5
         ]
     <|
-        List.map (timerListItem C.subtle) que
+        List.indexedMap (doneListItem C.subtle) que
 
 
-timerListItem : Color -> Timer -> Element Msg
-timerListItem c t =
-    -- column
-    --     [ Border.innerGlow c 2
-    --     , padding 5
-    --     , Border.rounded 10
-    --     , BG.color C.darkBase1
-    --     ]
-    --     [ el [ centerX ] <| text <| t.name
-    --     , el [ centerX ] <| text <| timeToString t.length
-    --     ]
+queListItem : Color -> Int -> Timer -> Element Msg
+queListItem c i t =
     el
         [ Font.color c
         , Font.size 20
@@ -219,7 +227,7 @@ timerListItem c t =
         , height (px 75)
         , Border.rounded 10
         , BG.color C.darkBase1
-        , onClick StartPauseClicked
+        , onClick <| QueTimerClicked i
         ]
         (column
             [ mouseOver [ Border.glow c 3 ]
@@ -229,7 +237,39 @@ timerListItem c t =
             , centerX
             , centerY
             ]
-            [ el [ centerX, centerY ] <| text <| t.name
+            [ el [ Font.size 15, Font.color C.subtle, centerX ] <| text <| String.fromInt i
+            , el [ centerX, centerY ] <| text <| t.name
+            , el [ centerX, centerY ] <|
+                text <|
+                    timeToString <|
+                        timeLeft t
+            ]
+        )
+
+
+doneListItem : Color -> Int -> Timer -> Element Msg
+doneListItem c i t =
+    el
+        [ Font.color c
+        , Font.size 20
+        , width <| fillPortion 3
+        , Border.innerGlow c 3
+        , width (px 75)
+        , height (px 75)
+        , Border.rounded 10
+        , BG.color C.darkBase1
+        , onClick <| DoneTimerClicked i
+        ]
+        (column
+            [ mouseOver [ Border.glow c 3 ]
+            , width (px 70)
+            , height (px 70)
+            , Border.rounded 10
+            , centerX
+            , centerY
+            ]
+            [ el [ Font.size 15, Font.color C.subtle, centerX ] <| text <| String.fromInt i
+            , el [ centerX, centerY ] <| text <| t.name
             , el [ centerX, centerY ] <|
                 text <|
                     timeToString <|
@@ -257,17 +297,132 @@ tryShiftForward : ( List Timer, Timer, List Timer ) -> ( List Timer, Timer, List
 tryShiftForward ( que, active, done ) =
     let
         maybeActive =
-            List.head que
+            que
+                |> List.head
 
         shorterTail =
-            Maybe.withDefault [] <| List.tail que
+            que
+                |> List.tail
+                |> Maybe.withDefault []
 
         newDone =
             active :: done
     in
     case maybeActive of
-        Just activeTimer ->
-            ( shorterTail, activeTimer, newDone )
+        Just justActive ->
+            ( shorterTail, justActive, newDone )
 
         Nothing ->
             ( que, active, done )
+
+
+tryShiftBackwards : ( List Timer, Timer, List Timer ) -> ( List Timer, Timer, List Timer )
+tryShiftBackwards ( que, active, done ) =
+    let
+        maybeActive =
+            List.head done
+
+        shorterTail =
+            List.tail done
+                |> Maybe.withDefault []
+
+        newQue =
+            que
+                |> (::) active
+    in
+    case maybeActive of
+        Just justActive ->
+            ( newQue, justActive, shorterTail )
+
+        Nothing ->
+            ( que, active, done )
+
+
+reccTryShiftForward : Int -> Model -> Model
+reccTryShiftForward i m =
+    case m of
+        Running que active done ->
+            if List.length que == i then
+                m
+
+            else
+                let
+                    ( newQue, newActive, newDone ) =
+                        tryShiftForward ( que, active, done )
+                in
+                reccTryShiftForward i (Running newQue newActive newDone)
+
+        Paused que active done ->
+            if List.length que == i then
+                m
+
+            else
+                let
+                    ( newQue, newActive, newDone ) =
+                        tryShiftForward ( que, active, done )
+                in
+                reccTryShiftForward i (Paused newQue newActive newDone)
+
+        Stopped que active ->
+            if List.length que == i then
+                m
+
+            else
+                let
+                    ( newQue, newActive, newDone ) =
+                        tryShiftForward ( que, active, [] )
+                in
+                reccTryShiftForward i (Running newQue newActive newDone)
+
+        _ ->
+            Debug.todo "rcc try shiftFwd"
+
+
+reccTryShiftBackwardsEntry : Int -> Model -> Model
+reccTryShiftBackwardsEntry i m =
+    case m of
+        Paused _ _ done ->
+            let
+                targetLength =
+                    List.length done - (i + 1)
+            in
+            reccTryShiftBackwards targetLength m
+
+        Running _ _ done ->
+            let
+                targetLength =
+                    List.length done - (i + 1)
+            in
+            reccTryShiftBackwards targetLength m
+
+        _ ->
+            m
+
+
+reccTryShiftBackwards : Int -> Model -> Model
+reccTryShiftBackwards i m =
+    case m of
+        Running que active done ->
+            if List.length done == i then
+                m
+
+            else
+                let
+                    ( newQue, newActive, newDone ) =
+                        tryShiftBackwards ( que, active, done )
+                in
+                reccTryShiftBackwards i (Running newQue newActive newDone)
+
+        Paused que active done ->
+            if List.length done == i then
+                m
+
+            else
+                let
+                    ( newQue, newActive, newDone ) =
+                        tryShiftBackwards ( que, active, done )
+                in
+                reccTryShiftBackwards i (Paused newQue newActive newDone)
+
+        _ ->
+            Debug.todo "rcc try shiftBwd"
