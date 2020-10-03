@@ -35,26 +35,26 @@ type Model
 init : Model
 init =
     Running
-        [ { name = "t1"
+        [ { name = "Paus"
           , length = 60
           , timePassed = 0
           }
-        , { name = "t2"
+        , { name = "Johan"
+          , length = 900
+          , timePassed = 0
+          }
+        , { name = "paus"
           , length = 60
           , timePassed = 0
           }
-        , { name = "t3"
-          , length = 60
-          , timePassed = 0
-          }
-        , { name = "t4"
-          , length = 60
+        , { name = "Viktor"
+          , length = 900
           , timePassed = 0
           }
         ]
         (defaultTimer
-            "act"
-            60
+            "Vlad"
+            900
         )
         []
 
@@ -237,8 +237,7 @@ queListItem c i t =
             , centerX
             , centerY
             ]
-            [ el [ Font.size 15, Font.color C.subtle, centerX ] <| text <| String.fromInt i
-            , el [ centerX, centerY ] <| text <| t.name
+            [ el [ centerX, centerY ] <| text <| t.name
             , el [ centerX, centerY ] <|
                 text <|
                     timeToString <|
@@ -268,8 +267,7 @@ doneListItem c i t =
             , centerX
             , centerY
             ]
-            [ el [ Font.size 15, Font.color C.subtle, centerX ] <| text <| String.fromInt i
-            , el [ centerX, centerY ] <| text <| t.name
+            [ el [ centerX, centerY ] <| text <| t.name
             , el [ centerX, centerY ] <|
                 text <|
                     timeToString <|
