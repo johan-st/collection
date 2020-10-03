@@ -3,8 +3,8 @@ module Page.Timer exposing (..)
 import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
+import Element.Events as Event exposing (onClick)
 import Element.Font as Font
-import Element.Input as Input
 import Time exposing (Posix)
 import Utils.Color as C
 
@@ -19,7 +19,7 @@ type alias Timer =
 defaultTimer : Timer
 defaultTimer =
     { name = "timer"
-    , length = 10
+    , length = 1000
     , timePassed = 1
     }
 
@@ -33,7 +33,7 @@ type Model
 
 init : Model
 init =
-    Running (List.repeat 10 defaultTimer) defaultTimer (List.repeat 0 defaultTimer)
+    Running (List.repeat 2 defaultTimer) defaultTimer (List.repeat 0 defaultTimer)
 
 
 type Msg
@@ -49,7 +49,7 @@ subscriptions model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Tick time ->
+        Tick _ ->
             case model of
                 Running que active done ->
                     let
@@ -93,67 +93,59 @@ view : Model -> Element Msg
 view model =
     case model of
         Stopped que active ->
-            column []
-                [ row
-                    [ paddingXY 30 100
-                    , width fill
-                    , spacing 10
-                    ]
-                    [ queView que, pausedMain active ]
-                , Input.button []
-                    { onPress = Just StartPauseClicked
-                    , label = el [ Font.size 60 ] <| text <| "play/pause"
-                    }
-                ]
+            timersView C.accent4 que active []
 
         Paused que active done ->
-            column []
-                [ row
-                    [ paddingXY 15 100
-                    , width fill
-                    , spacing 10
-                    ]
-                  <|
-                    [ queView que, pausedMain active, queView done ]
-                , Input.button []
-                    { onPress = Just StartPauseClicked
-                    , label = el [ Font.size 60 ] <| text <| "play/pause"
-                    }
-                ]
+            timersView C.accent3 que active done
 
         Running que active done ->
-            column []
-                [ row
-                    [ paddingXY 15 100
-                    , width fill
-                    , spacing 10
-                    ]
-                  <|
-                    [ queView que, activeMain active, queView done ]
-                , Input.button []
-                    { onPress = Just StartPauseClicked
-                    , label = el [ Font.size 60 ] <| text <| "play/pause"
-                    }
-                ]
+            timersView C.accent2 que active done
 
         _ ->
             Debug.todo "Timer model view cases"
 
 
-activeMain : Timer -> Element Msg
-activeMain t =
-    column
-        [ Font.color C.accent2
+timersView : Color -> List Timer -> Timer -> List Timer -> Element Msg
+timersView color que active done =
+    column [ centerX ]
+        [ row
+            [ paddingXY 15 100
+            , width fill
+            , spacing 10
+            ]
+          <|
+            [ queView que, activeMain color active, queView done ]
+        ]
+
+
+activeMain : Color -> Timer -> Element Msg
+activeMain color t =
+    el
+        [ Font.color color
         , Font.size 60
         , width <| fillPortion 3
-        , Border.innerGlow C.accent2 10
-        , padding 30
+        , Border.innerGlow color 10
+        , width (px 250)
+        , height (px 250)
         , Border.rounded 50
         , BG.color C.darkBase1
+        , onClick StartPauseClicked
         ]
-        [ el [ centerX ] <| text <| t.name
-        , el [ centerX ] <| text <| timeToString <| timeLeft t
-        ]
+        (column
+            [ mouseOver [ Border.glow color 10 ]
+            , width (px 245)
+            , height (px 245)
+            , Border.rounded 50
+            , centerX
+            , centerY
+            ]
+            [ el [ centerX, centerY ] <| text <| t.name
+            , el [ centerX, centerY ] <|
+                text <|
+                    timeToString <|
+                        timeLeft t
+            ]
+        )
 
 
 pausedMain : Timer -> Element Msg
@@ -220,9 +212,6 @@ timeToString timeInSecs =
 
         sec =
             String.padLeft 2 '0' secIntermediate
-
-        d1 =
-            Debug.log "sec" sec
     in
     min ++ ":" ++ sec
 
