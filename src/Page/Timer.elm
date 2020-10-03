@@ -3,7 +3,7 @@ module Page.Timer exposing (..)
 import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
-import Element.Events as Event exposing (onClick)
+import Element.Events exposing (onClick)
 import Element.Font as Font
 import Time exposing (Posix)
 import Utils.Color as C
@@ -19,7 +19,7 @@ type alias Timer =
 defaultTimer : Timer
 defaultTimer =
     { name = "timer"
-    , length = 1000
+    , length = 120
     , timePassed = 1
     }
 
@@ -33,7 +33,7 @@ type Model
 
 init : Model
 init =
-    Running (List.repeat 2 defaultTimer) defaultTimer (List.repeat 0 defaultTimer)
+    Running (List.repeat 2 defaultTimer) defaultTimer (List.repeat 1 defaultTimer)
 
 
 type Msg
@@ -114,7 +114,7 @@ timersView color que active done =
             , spacing 10
             ]
           <|
-            [ queView que, activeMain color active, queView done ]
+            [ queView que, activeMain color active, doneView done ]
         ]
 
 
@@ -185,20 +185,57 @@ queView que =
         , spacing 5
         ]
     <|
-        List.map timerListItem que
+        List.map (timerListItem C.accent4) que
 
 
-timerListItem : Timer -> Element Msg
-timerListItem t =
-    column
-        [ Border.innerGlow C.accent4 2
-        , padding 5
+doneView : List Timer -> Element Msg
+doneView que =
+    row
+        [ Font.color C.subtle
+        , width <| fillPortion 1
+        , spacing 5
+        ]
+    <|
+        List.map (timerListItem C.subtle) que
+
+
+timerListItem : Color -> Timer -> Element Msg
+timerListItem c t =
+    -- column
+    --     [ Border.innerGlow c 2
+    --     , padding 5
+    --     , Border.rounded 10
+    --     , BG.color C.darkBase1
+    --     ]
+    --     [ el [ centerX ] <| text <| t.name
+    --     , el [ centerX ] <| text <| timeToString t.length
+    --     ]
+    el
+        [ Font.color c
+        , Font.size 20
+        , width <| fillPortion 3
+        , Border.innerGlow c 3
+        , width (px 75)
+        , height (px 75)
         , Border.rounded 10
         , BG.color C.darkBase1
+        , onClick StartPauseClicked
         ]
-        [ el [ centerX ] <| text <| t.name
-        , el [ centerX ] <| text <| timeToString t.length
-        ]
+        (column
+            [ mouseOver [ Border.glow c 3 ]
+            , width (px 70)
+            , height (px 70)
+            , Border.rounded 10
+            , centerX
+            , centerY
+            ]
+            [ el [ centerX, centerY ] <| text <| t.name
+            , el [ centerX, centerY ] <|
+                text <|
+                    timeToString <|
+                        timeLeft t
+            ]
+        )
 
 
 timeToString : Int -> String
