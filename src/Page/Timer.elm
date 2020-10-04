@@ -1,4 +1,4 @@
-module Page.Timer exposing (..)
+port module Page.Timer exposing (..)
 
 import Element exposing (..)
 import Element.Background as BG
@@ -64,6 +64,7 @@ type Msg
     | StartPauseClicked
     | QueTimerClicked Int
     | DoneTimerClicked Int
+    | Beep String
 
 
 subscriptions : Model -> Sub Msg
@@ -89,19 +90,22 @@ update msg model =
                             ( newQue, newActive, newDone ) =
                                 tryShiftForward ( que, active, done )
                         in
-                        ( Running newQue newActive newDone, Cmd.none )
+                        ( Running newQue newActive newDone, sound "correct" )
 
                 _ ->
                     ( model, Cmd.none )
 
         StartPauseClicked ->
-            ( playPause model, Cmd.none )
+            ( playPause model, sound "click" )
 
         QueTimerClicked i ->
-            ( reccTryShiftForward i model, Cmd.none )
+            ( reccTryShiftForward i model, sound "click" )
 
         DoneTimerClicked i ->
-            ( reccTryShiftBackwardsEntry i model, Cmd.none )
+            ( reccTryShiftBackwardsEntry i model, sound "click" )
+
+        Beep soundString ->
+            ( model, sound soundString )
 
 
 playPause : Model -> Model
@@ -424,3 +428,6 @@ reccTryShiftBackwards i m =
 
         _ ->
             Debug.todo "rcc try shiftBwd"
+
+
+port sound : String -> Cmd msg
