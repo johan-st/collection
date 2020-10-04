@@ -22,10 +22,13 @@ app.ports.setPersist.subscribe((persist) => {
 });
 // playSound
 app.ports.sound.subscribe((select) => {
+  console.log(sounds);
   if (select === "click") {
     sounds.click.play();
   } else if (select === "coin") {
     sounds.coin.play();
+  } else if (select === "jingle") {
+    sounds.jingle.play();
   } else if (select === "correct") {
     sounds.correct.play();
   } else {

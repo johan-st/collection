@@ -90,7 +90,7 @@ update msg model =
                             ( newQue, newActive, newDone ) =
                                 tryShiftForward ( que, active, done )
                         in
-                        ( Running newQue newActive newDone, sound "correct" )
+                        ( Running newQue newActive newDone, sound "jingle" )
 
                 _ ->
                     ( model, Cmd.none )
