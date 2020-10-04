@@ -22,7 +22,6 @@ app.ports.setPersist.subscribe((persist) => {
 });
 // playSound
 app.ports.sound.subscribe((select) => {
-  console.log(sounds);
   if (select === "click") {
     sounds.click.play();
   } else if (select === "coin") {
