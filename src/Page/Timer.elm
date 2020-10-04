@@ -83,7 +83,7 @@ update msg model =
                             active.timePassed + 1
                     in
                     if timeLeft active > 0 then
-                        ( Running que { active | timePassed = newElapsed } done, Cmd.none )
+                        ( Running que { active | timePassed = newElapsed } done, sound "keepAlive" )
 
                     else
                         let
