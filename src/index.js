@@ -26,8 +26,8 @@ app.ports.sound.subscribe((select) => {
     sounds.click.play();
   } else if (select === "coin") {
     sounds.coin.play();
-  } else if (select === "keepAlive") {
-    sounds.keepAlive.play();
+    // } else if (select === "keepAlive") {
+    //   sounds.keepAlive.play();
   } else if (select === "jingle") {
     sounds.jingle.play();
   } else if (select === "correct") {

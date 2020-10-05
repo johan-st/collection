@@ -68,7 +68,7 @@ type Msg
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Time.every 1000 Tick
 
 
@@ -90,13 +90,13 @@ update msg model =
                             ( newQue, newActive, newDone ) =
                                 tryShiftForward ( que, active, done )
                         in
-                        ( Running newQue newActive newDone, sound "jingle" )
+                        ( Running newQue newActive newDone, sound "correct" )
 
                 _ ->
                     ( model, Cmd.none )
 
         StartPauseClicked ->
-            ( playPause model, sound "click" )
+            ( playPause model, sound "coin" )
 
         QueTimerClicked i ->
             ( reccTryShiftForward i model, sound "click" )
