@@ -36,7 +36,7 @@ type Model
 
 init : Model
 init =
-    Running
+    Paused
         [ timer "stretch" 60 Coin
         , timer "Vlad" 900 Correct
         , timer "stretch" 60 Coin
@@ -115,7 +115,7 @@ view : Model -> Element Msg
 view model =
     case model of
         Stopped que active ->
-            timersView C.accent4 que active []
+            timersView C.accent1 que active []
 
         Paused que active done ->
             timersView C.accent3 que active done
@@ -205,6 +205,36 @@ doneView que =
         ]
     <|
         List.indexedMap (doneListItem C.subtle) que
+
+
+timerListItem : Color -> Int -> Timer -> (Int -> Msg) -> Element Msg
+timerListItem accent index timer_ msg =
+    el
+        [ Font.color accent
+        , Font.size 20
+        , width <| fillPortion 3
+        , Border.innerGlow accent 3
+        , width (px 75)
+        , height (px 75)
+        , Border.rounded 10
+        , BG.color C.darkBase1
+        , onClick <| msg index
+        ]
+        (column
+            [ mouseOver [ Border.glow accent 3 ]
+            , width (px 70)
+            , height (px 70)
+            , Border.rounded 10
+            , centerX
+            , centerY
+            ]
+            [ el [ centerX, centerY ] <| text <| timer_.name
+            , el [ centerX, centerY ] <|
+                text <|
+                    timeToString <|
+                        timeLeft timer_
+            ]
+        )
 
 
 queListItem : Color -> Int -> Timer -> Element Msg
