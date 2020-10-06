@@ -26,8 +26,6 @@ app.ports.sound.subscribe((select) => {
     sounds.click.play();
   } else if (select === "coin") {
     sounds.coin.play();
-    // } else if (select === "keepAlive") {
-    //   sounds.keepAlive.play();
   } else if (select === "jingle") {
     sounds.jingle.play();
   } else if (select === "correct") {
@@ -40,4 +38,4 @@ app.ports.sound.subscribe((select) => {
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+serviceWorker.register();

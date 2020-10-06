@@ -137,7 +137,7 @@ view model =
             timersView C.accent2 que active done
 
         _ ->
-            Debug.todo "Timer model view cases"
+            Element.none
 
 
 timersView : Color -> List Timer -> Timer -> List Timer -> Element Msg
@@ -191,7 +191,7 @@ timeLeft t =
             t.length - t.timePassed
     in
     if diff < 0 then
-        Debug.todo "do I need to handle this?"
+        0
 
     else
         diff
@@ -377,7 +377,7 @@ reccTryShiftForward i m =
                 reccTryShiftForward i (Running newQue newActive newDone)
 
         _ ->
-            Debug.todo "rcc try shiftFwd"
+            m
 
 
 reccTryShiftBackwardsEntry : Int -> Model -> Model
@@ -427,7 +427,7 @@ reccTryShiftBackwards i m =
                 reccTryShiftBackwards i (Paused newQue newActive newDone)
 
         _ ->
-            Debug.todo "rcc try shiftBwd"
+            m
 
 
 port sound : String -> Cmd msg

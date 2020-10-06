@@ -6,7 +6,6 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input exposing (search)
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
@@ -224,7 +223,7 @@ update msg model =
                     ( model, Cmd.none )
 
         Tick time ->
-            ( { model | time = time }, Cmd.none )
+            ( { model | time = time }, setPersist (E.encode 1 (persistEncoder model.persistance)) )
 
         AdjustTimeZone newZone ->
             ( { model | zone = newZone }
@@ -360,10 +359,6 @@ navBar model =
         , link [ width fill, Font.underline ] { label = text "Visuals", url = "/visuals" }
         , link [ width fill, Font.underline ] { label = text "Timer", url = "/timer" }
         , link [ width fill, Font.underline ] { label = text "Search", url = "/search" }
-        , Input.button [ Font.underline, Font.color C.accent2 ]
-            { onPress = Just UpdateLocalStorage
-            , label = text "save state"
-            }
         , spacer 1
         , el [ Font.color C.accent3, Font.family [ Font.monospace ] ] <| text (toTime model.zone model.time)
         ]
