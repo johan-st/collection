@@ -21,7 +21,7 @@ app.ports.setPersist.subscribe((persist) => {
   localStorage.setItem("elm-model", JSON.stringify(persist));
 });
 // playSound
-app.ports.sound.subscribe((select) => {
+app.ports.soundPortActual.subscribe((select) => {
   if (select === "click") {
     sounds.click.play();
   } else if (select === "coin") {
