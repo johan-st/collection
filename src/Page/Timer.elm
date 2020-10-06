@@ -14,14 +14,16 @@ type alias Timer =
     { name : String
     , length : Int
     , timePassed : Int
+    , sound : Sound
     }
 
 
-defaultTimer : String -> Int -> Timer
-defaultTimer s i =
-    { name = s
-    , length = i
+timer : String -> Int -> Sound -> Timer
+timer name length sound =
+    { name = name
+    , length = length
     , timePassed = 0
+    , sound = sound
     }
 
 
@@ -35,27 +37,12 @@ type Model
 init : Model
 init =
     Running
-        [ { name = "Paus"
-          , length = 60
-          , timePassed = 0
-          }
-        , { name = "Johan"
-          , length = 900
-          , timePassed = 0
-          }
-        , { name = "paus"
-          , length = 60
-          , timePassed = 0
-          }
-        , { name = "Viktor"
-          , length = 900
-          , timePassed = 0
-          }
+        [ timer "stretch" 60 Coin
+        , timer "Vlad" 900 Correct
+        , timer "stretch" 60 Coin
+        , timer "Viktor" 900 Correct
         ]
-        (defaultTimer
-            "Vlad"
-            900
-        )
+        (timer "Johan" 900 Correct)
         []
 
 
@@ -64,7 +51,7 @@ type Msg
     | StartPauseClicked
     | QueTimerClicked Int
     | DoneTimerClicked Int
-    | Beep String
+    | Beep Sound
 
 
 subscriptions : Model -> Sub Msg
@@ -83,29 +70,29 @@ update msg model =
                             active.timePassed + 1
                     in
                     if timeLeft active > 0 then
-                        ( Running que { active | timePassed = newElapsed } done, sound "keepAlive" )
+                        ( Running que { active | timePassed = newElapsed } done, Cmd.none )
 
                     else
                         let
                             ( newQue, newActive, newDone ) =
                                 tryShiftForward ( que, active, done )
                         in
-                        ( Running newQue newActive newDone, sound "correct" )
+                        ( Running newQue newActive newDone, soundPort Correct )
 
                 _ ->
                     ( model, Cmd.none )
 
         StartPauseClicked ->
-            ( playPause model, sound "coin" )
+            ( playPause model, soundPort Click )
 
         QueTimerClicked i ->
-            ( reccTryShiftForward i model, sound "click" )
+            ( reccTryShiftForward i model, soundPort Click )
 
         DoneTimerClicked i ->
-            ( reccTryShiftBackwardsEntry i model, sound "click" )
+            ( reccTryShiftBackwardsEntry i model, soundPort Click )
 
-        Beep soundString ->
-            ( model, sound soundString )
+        Beep sound ->
+            ( model, soundPort sound )
 
 
 playPause : Model -> Model
@@ -430,4 +417,31 @@ reccTryShiftBackwards i m =
             m
 
 
-port sound : String -> Cmd msg
+
+-- SOUND
+
+
+type Sound
+    = Click
+    | Jingle
+    | Coin
+    | Correct
+
+
+soundPort : Sound -> Cmd Msg
+soundPort sound =
+    case sound of
+        Click ->
+            soundPortActual "click"
+
+        Jingle ->
+            soundPortActual "jingle"
+
+        Coin ->
+            soundPortActual "coin"
+
+        Correct ->
+            soundPortActual "correct"
+
+
+port soundPortActual : String -> Cmd msg
