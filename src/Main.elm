@@ -30,7 +30,7 @@ type alias Model =
     { key : Nav.Key
     , url : Url.Url
     , page : Page
-    , persistance : Persist20200929
+    , persistance : PersistV1
     , time : Time.Posix
     , zone : Time.Zone
     }
@@ -48,22 +48,22 @@ init flags url key =
                     Page.Landing
 
                 "/fizzbuzz" ->
-                    persist.fizzbuzz
+                    Page.FizzBuzz persist.fizzBuzz
 
                 "/numerals" ->
-                    persist.numerals
+                    Page.RomanNumerals persist.numerals
 
                 "/visuals" ->
                     Page.Visuals Visuals.init
 
                 "/primes" ->
-                    persist.primeFactors
+                    Page.PrimeFactorization persist.primeFactors
 
                 "/search" ->
                     Page.Search <| Search.init url
 
                 "/timer" ->
-                    Page.Timer <| Timer.init
+                    Page.Timer persist.timer
 
                 _ ->
                     Page.NotFound_404
@@ -79,24 +79,19 @@ init flags url key =
     )
 
 
-initialPersistance : String -> Persist20200929
+initialPersistance : String -> Persist
 initialPersistance flags =
     case D.decodeString persistDecoder flags of
         Result.Err _ ->
-            { numerals = RomanNumerals (Numeral.Model "" [])
-            , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
-            , primeFactors = Page.PrimeFactorization ""
-            }
+            V2
+                { numerals = RomanNumerals (Numeral.Model "" [])
+                , fizzbuzz = Page.FizzBuzz <| FizzBuzz.init 7
+                , primeFactors = Page.PrimeFactorization ""
+                , timer = Page.Timer Timer.init
+                }
 
         Ok data ->
             data
-
-
-type alias Persist20200929 =
-    { fizzbuzz : Page
-    , numerals : Page
-    , primeFactors : Page
-    }
 
 
 
@@ -136,7 +131,7 @@ update msg model =
                             Page.Landing
 
                         "/fizzbuzz" ->
-                            model.persistance.fizzbuzz
+                            loadPage Page.FizzBuzz model.persistance.fizzbuzz
 
                         "/numerals" ->
                             model.persistance.numerals
@@ -552,10 +547,67 @@ port setPersist : String -> Cmd msg
 
 
 -- ENCODE / DECODE --
+-- TODO: consider saving the model and not the entire page
 
 
-persistEncoder : Persist20200929 -> E.Value
+type Persist
+    = V1 PersistV1
+    | V2 PersistV2
+
+
+persistDecoderHelper : String -> D.Decoder Persist
+persistDecoderHelper versionString =
+    case versionString of
+        "v20200929" ->
+            D.map V1 p_V1_Decoder
+
+        _ ->
+            D.fail "unhandled version"
+
+
+persistDecoder : D.Decoder Persist
+persistDecoder =
+    D.field "storeVersion" D.string
+        |> D.andThen persistDecoderHelper
+
+
+type alias PersistV2 =
+    { fizzbuzz : Page
+    , numerals : Page
+    , primeFactors : Page
+    , timer : Page
+    }
+
+
+updradePersist : PersistV1 -> PersistV2
+updradePersist old =
+    { fizzbuzz = old.fizzbuzz
+    , numerals = old.numerals
+    , primeFactors = old.primeFactors
+    , timer = Timer Timer.init
+    }
+
+
+persistEncoder : PersistV2 -> E.Value
 persistEncoder p =
+    E.object
+        [ ( "storeVersion", E.string "v20200929" )
+        , ( "fizzbuzz", pageEncoder p.fizzbuzz )
+        , ( "numerals", pageEncoder p.numerals )
+        , ( "prime", pageEncoder p.primeFactors )
+        , ( "timer", pageEncoder p.timer )
+        ]
+
+
+type alias PersistV1 =
+    { fizzbuzz : Page
+    , numerals : Page
+    , primeFactors : Page
+    }
+
+
+persistEncoderOld : PersistV1 -> E.Value
+persistEncoderOld p =
     E.object
         [ ( "storeVersion", E.string "v20200929" )
         , ( "fizzbuzz", pageEncoder p.fizzbuzz )
@@ -564,25 +616,9 @@ persistEncoder p =
         ]
 
 
-persistDecoder : D.Decoder Persist20200929
-persistDecoder =
-    D.field "storeVersion" D.string
-        |> D.andThen persistDecoderHelper
-
-
-persistDecoderHelper : String -> D.Decoder Persist20200929
-persistDecoderHelper versionString =
-    case versionString of
-        "v20200929" ->
-            persist20200929Decoder
-
-        _ ->
-            D.fail "unhandled version"
-
-
-persist20200929Decoder : D.Decoder Persist20200929
-persist20200929Decoder =
-    D.map3 Persist20200929
+p_V1_Decoder : D.Decoder PersistV1
+p_V1_Decoder =
+    D.map3 PersistV1
         (D.field "fizzbuzz" Page.fizzbuzzDecoder)
         (D.field "numerals" Page.numeralsDecoder)
         (D.field "prime" Page.primeDecoder)
