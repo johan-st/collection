@@ -9,7 +9,7 @@ import Element.Font as Font
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
-import Page.Page as Page exposing (Page(..), fizzbuzzDecoder, numeralsDecoder, pageEncoder, primeDecoder)
+import Page.Page as Page exposing (Page(..))
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numeral exposing (Numeral(..))
 import Page.Search as Search
@@ -133,19 +133,19 @@ update msg model =
                             Page.fromModel <| Page.FB model.persistance.fizzbuzz
 
                         "/numerals" ->
-                            Page.fromModel model.persistance.numerals
+                            Page.fromModel <| Page.N model.persistance.numerals
 
                         "/visuals" ->
-                            Page.fromModel ""
+                            Page.fromModel <| Page.V ""
 
                         "/primes" ->
-                            Page.fromModel model.persistance.primeFactors
+                            Page.fromModel <| Page.P model.persistance.primeFactors
 
                         "/search" ->
                             Page.Search (Search.init model.url)
 
                         "/timer" ->
-                            Page.fromModel model.persistance.timer
+                            Page.fromModel <| Page.T model.persistance.timer
 
                         _ ->
                             Page.NotFound_404
@@ -243,7 +243,7 @@ toPrime model ( primeModel, cmd ) =
             model.persistance
 
         newPersist =
-            { persist | primeFactors = newPrime }
+            { persist | primeFactors = primeModel }
     in
     ( { model | page = newPrime, persistance = newPersist }
     , Cmd.map GotPrimeMsg cmd
@@ -267,7 +267,7 @@ toNumeral model ( numModel, cmd ) =
             model.persistance
 
         newPersist =
-            { persist | numerals = newNumeral }
+            { persist | numerals = numModel }
     in
     ( { model | page = newNumeral, persistance = newPersist }
     , Cmd.map GotNumeralMsg cmd
@@ -284,7 +284,7 @@ toFizzBuzz model ( fizzBuzzModel, cmd ) =
             model.persistance
 
         newPersist =
-            { persist | fizzbuzz = newFizz }
+            { persist | fizzbuzz = fizzBuzzModel }
     in
     ( { model | page = newFizz, persistance = newPersist }
     , Cmd.map GotFizzBuzzMsg cmd
@@ -577,8 +577,8 @@ persistEncoder : PersistV2 -> E.Value
 persistEncoder p =
     E.object
         [ ( "storeVersion", E.string "v2" )
-        , ( "fizzbuzz", pageEncoder p.fizzbuzz )
-        , ( "numerals", pageEncoder p.numerals )
-        , ( "prime", pageEncoder p.primeFactors )
-        , ( "timer", pageEncoder p.timer )
+        , ( "fizzbuzz", FizzBuzz.modelEncoder p.fizzbuzz )
+        , ( "numerals", Numeral.modelEncoder p.numerals )
+        , ( "prime", Prime.modelEncoder p.primeFactors )
+        , ( "timer", Timer.modelEncoder p.timer )
         ]

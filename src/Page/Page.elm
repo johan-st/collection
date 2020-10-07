@@ -53,38 +53,3 @@ fromModel m =
 
         S model ->
             Search model
-
-
-
--- ENCODE / DECODE --
-
-
-pageEncoder : Page -> E.Value
-pageEncoder p =
-    case p of
-        FizzBuzz model ->
-            FizzBuzz.modelEncoder model
-
-        RomanNumerals model ->
-            Numerals.modelEncoder model
-
-        PrimeFactorization model ->
-            Prime.modelEncoder model
-
-        _ ->
-            E.null
-
-
-fizzbuzzDecoder : D.Decoder Page
-fizzbuzzDecoder =
-    D.map FizzBuzz FizzBuzz.modelDecoder
-
-
-numeralsDecoder : D.Decoder Page
-numeralsDecoder =
-    D.map RomanNumerals Numerals.modelDecoder
-
-
-primeDecoder : D.Decoder Page
-primeDecoder =
-    D.map PrimeFactorization Prime.modelDecoder

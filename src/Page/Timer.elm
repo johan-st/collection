@@ -5,6 +5,8 @@ import Element.Background as BG
 import Element.Border as Border
 import Element.Events exposing (onClick)
 import Element.Font as Font
+import Json.Decode as D
+import Json.Encode as E
 import Page.PrimeFactorization exposing (Model)
 import Time exposing (Posix)
 import Utils.Color as C
@@ -475,3 +477,55 @@ soundPort sound =
 
 
 port soundPortActual : String -> Cmd msg
+
+
+
+-- ENDODE / DECODE
+-- type Model
+--     = Stopped (List Timer) Timer
+--     | Paused (List Timer) Timer (List Timer)
+--     | Running (List Timer) Timer (List Timer)
+--     | Ended Timer (List Timer)
+
+
+modelEncoder : Model -> E.Value
+modelEncoder model =
+    case model of
+        Stopped que act ->
+            E.object
+                [ ( "state", E.string "Stopped" )
+                , ( "que", E.list timerEncoder que )
+                , ( "active", timerEncoder act )
+                ]
+
+        Paused que act done ->
+            E.object
+                [ ( "state", E.string "Paused" )
+                , ( "que", E.list timerEncoder que )
+                , ( "active", timerEncoder act )
+                , ( "done", E.list timerEncoder done )
+                ]
+
+        Running que act done ->
+            E.object
+                [ ( "state", E.string "Running" )
+                , ( "que", E.list timerEncoder que )
+                , ( "active", timerEncoder act )
+                , ( "done", E.list timerEncoder done )
+                ]
+
+        Ended act done ->
+            E.object
+                [ ( "state", E.string "Ended" )
+                , ( "active", timerEncoder act )
+                , ( "done", E.list timerEncoder done )
+                ]
+
+
+timerEncoder : Timer -> E.Value
+timerEncoder t =
+    E.object [ ( "name", E.string t.name ) ]
+        , length = Int
+        , timePassed = Int
+        , sound = Sound
+        }
