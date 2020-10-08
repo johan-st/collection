@@ -524,8 +524,25 @@ modelEncoder model =
 
 timerEncoder : Timer -> E.Value
 timerEncoder t =
-    E.object [ ( "name", E.string t.name ) ]
-        , length = Int
-        , timePassed = Int
-        , sound = Sound
-        }
+    E.object
+        [ ( "name", E.string t.name )
+        , ( "length", E.int t.length )
+        , ( "timePassed", E.int t.timePassed )
+        , ( "sound", soundEncoder t.sound )
+        ]
+
+
+soundEncoder : Sound -> E.Value
+soundEncoder s =
+    case s of
+        Click ->
+            E.string "click"
+
+        Jingle ->
+            E.string "length"
+
+        Coin ->
+            E.string "coin"
+
+        Correct ->
+            E.string "correct"
