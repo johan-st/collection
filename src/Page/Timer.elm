@@ -7,6 +7,8 @@ import Element.Events exposing (onClick, onDoubleClick)
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (input)
+import Json.Decode as D
+import Json.Encode as E
 import Page.PrimeFactorization exposing (Model)
 import Time exposing (Posix)
 import Utils.Color as C
@@ -42,8 +44,9 @@ init =
         , timer "Vlad" 900 Correct
         , timer "short" 60 Coin
         , timer "Viktor" 900 Correct
+
         ]
-        (timer "Johan" 900 Correct)
+        (timer "Johan" 9 Correct)
         []
 
 
@@ -84,7 +87,7 @@ update msg model =
                             ( newQue, newActive, newDone ) =
                                 tryShiftForward ( que, active, done )
                         in
-                        ( Running newQue newActive newDone, soundPort Correct )
+                        ( Running newQue newActive newDone, soundPort active.sound )
 
                 _ ->
                     ( model, Cmd.none )
@@ -725,3 +728,124 @@ soundPort sound =
 
 
 port soundPortActual : String -> Cmd msg
+
+
+
+-- ENDODE / DECODE
+-- type Model
+--     = Stopped (List Timer) Timer
+--     | Paused (List Timer) Timer (List Timer)
+--     | Running (List Timer) Timer (List Timer)
+--     | Ended Timer (List Timer)
+
+
+modelDecoder : D.Decoder Model
+modelDecoder =
+    D.field "state" D.string
+        |> D.andThen modelDecoderHelper
+
+
+modelDecoderHelper : String -> D.Decoder Model
+modelDecoderHelper state =
+    case state of
+        "Stopped" ->
+            D.map2 Stopped
+                (D.field "que" (D.list timerDecoder))
+                (D.field "active" timerDecoder)
+
+        "Paused" ->
+            D.map3 Paused
+                (D.field "que" (D.list timerDecoder))
+                (D.field "active" timerDecoder)
+                (D.field "done" (D.list timerDecoder))
+
+        _ ->
+            Debug.todo ""
+
+
+timerDecoder : D.Decoder Timer
+timerDecoder =
+    D.map4 Timer
+        (D.field "name" D.string)
+        (D.field "length" D.int)
+        (D.field "timePassed" D.int)
+        (D.field "sound" (D.andThen soundDecoder D.string))
+
+
+soundDecoder : String -> D.Decoder Sound
+soundDecoder sound =
+    case sound of
+        "click" ->
+            D.succeed Click
+
+        "jingle" ->
+            D.succeed Jingle
+
+        "coin" ->
+            D.succeed Coin
+
+        "correct" ->
+            D.succeed Correct
+
+        _ ->
+            D.fail "Failed to decode sound"
+
+
+modelEncoder : Model -> E.Value
+modelEncoder model =
+    case model of
+        Stopped que act ->
+            E.object
+                [ ( "state", E.string "Stopped" )
+                , ( "que", E.list timerEncoder que )
+                , ( "active", timerEncoder act )
+                ]
+
+        Paused que act done ->
+            E.object
+                [ ( "state", E.string "Paused" )
+                , ( "que", E.list timerEncoder que )
+                , ( "active", timerEncoder act )
+                , ( "done", E.list timerEncoder done )
+                ]
+
+        Running que act done ->
+            E.object
+                [ ( "state", E.string "Running" )
+                , ( "que", E.list timerEncoder que )
+                , ( "active", timerEncoder act )
+                , ( "done", E.list timerEncoder done )
+                ]
+
+        Ended act done ->
+            E.object
+                [ ( "state", E.string "Ended" )
+                , ( "active", timerEncoder act )
+                , ( "done", E.list timerEncoder done )
+                ]
+
+
+timerEncoder : Timer -> E.Value
+timerEncoder t =
+    E.object
+        [ ( "name", E.string t.name )
+        , ( "length", E.int t.length )
+        , ( "timePassed", E.int t.timePassed )
+        , ( "sound", soundEncoder t.sound )
+        ]
+
+
+soundEncoder : Sound -> E.Value
+soundEncoder s =
+    case s of
+        Click ->
+            E.string "click"
+
+        Jingle ->
+            E.string "jingle"
+
+        Coin ->
+            E.string "coin"
+
+        Correct ->
+            E.string "correct"
