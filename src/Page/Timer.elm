@@ -3,7 +3,7 @@ port module Page.Timer exposing (..)
 import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
-import Element.Events exposing (onClick)
+import Element.Events exposing (onClick, onDoubleClick)
 import Element.Font as Font
 import Page.PrimeFactorization exposing (Model)
 import Time exposing (Posix)
@@ -28,10 +28,9 @@ timer name length sound =
 
 
 type Model
-    = Stopped (List Timer) Timer
-    | Paused (List Timer) Timer (List Timer)
+    = Paused (List Timer) Timer (List Timer)
     | Running (List Timer) Timer (List Timer)
-    | Ended Timer (List Timer)
+    | Edit (List Timer) Timer (List Timer)
 
 
 init : Model
@@ -52,6 +51,9 @@ type Msg
     | QueTimerClicked Int
     | DoneTimerClicked Int
     | Beep Sound
+    | ResetAll
+    | ResetActive
+    | EditTimersClicked
 
 
 subscriptions : Model -> Sub Msg
@@ -94,36 +96,88 @@ update msg model =
         Beep sound ->
             ( model, soundPort sound )
 
+        ResetAll ->
+            ( resetAll model, soundPort Click )
+
+        ResetActive ->
+            ( resetActive model, Cmd.none )
+
+        EditTimersClicked ->
+            ( editToggle model, Cmd.none )
+
+
+resetActive : Model -> Model
+resetActive model =
+    case model of
+        Paused que active done ->
+            Paused que { active | timePassed = 0 } done
+
+        Running que active done ->
+            Paused que { active | timePassed = 0 } done
+
+        Edit que active done ->
+            Paused que { active | timePassed = 0 } done
+
+
+
+--  TODO: Have reset all move all the way back and pause the timers
+
+
+resetAll : Model -> Model
+resetAll model =
+    case model of
+        Paused que active done ->
+            Paused
+                (List.map (\t -> { t | timePassed = 0 }) que)
+                { active | timePassed = 0 }
+                (List.map (\t -> { t | timePassed = 0 }) done)
+
+        Running que active done ->
+            Paused
+                (List.map (\t -> { t | timePassed = 0 }) que)
+                { active | timePassed = 0 }
+                (List.map (\t -> { t | timePassed = 0 }) done)
+
+        Edit que active done ->
+            Paused que { active | timePassed = 0 } done
+
 
 playPause : Model -> Model
 playPause model =
     case model of
-        Stopped que active ->
-            Running que active []
-
         Paused que active done ->
             Running que active done
 
         Running que active done ->
             Paused que active done
 
-        Ended active done ->
-            Ended active done
+        Edit que active done ->
+            Paused que active done
+
+
+editToggle : Model -> Model
+editToggle model =
+    case model of
+        Paused que active done ->
+            Edit que active done
+
+        Running que active done ->
+            Edit que active done
+
+        Edit que active done ->
+            Paused que active done
 
 
 view : Model -> Element Msg
 view model =
     case model of
-        Stopped que active ->
-            timersView C.accent1 que active []
-
         Paused que active done ->
             timersView C.accent3 que active done
 
         Running que active done ->
             timersView C.accent2 que active done
 
-        _ ->
+        Edit que active done ->
             Element.none
 
 
@@ -131,13 +185,41 @@ timersView : Color -> List Timer -> Timer -> List Timer -> Element Msg
 timersView color que active done =
     column [ centerX ]
         [ wrappedRow
-            [ paddingXY 15 100
-            , width fill
-            , spacing 10
-            ]
-          <|
+            [ paddingXY 15 100, width fill, spacing 10 ]
             [ queView que, activeTimer color active, doneView done ]
+        , wrappedRow [ padding 15, spacing 10, centerX ]
+            [ resetView, editView ]
         ]
+
+
+resetView : Element Msg
+resetView =
+    el
+        [ Border.rounded 10
+        , Border.width 1
+        , padding 20
+        , centerX
+        , onClick ResetAll
+        , pointer
+        , mouseOver
+            [ Border.glow C.accent3 5 ]
+        ]
+        (text "reset all")
+
+
+editView : Element Msg
+editView =
+    el
+        [ Border.rounded 10
+        , Border.width 1
+        , padding 20
+        , centerX
+        , onClick EditTimersClicked
+        , pointer
+        , mouseOver
+            [ Border.glow C.accent1 5 ]
+        ]
+        (text "edit timers")
 
 
 activeTimer : Color -> Timer -> Element Msg
@@ -152,7 +234,9 @@ activeTimer color t =
         , Border.rounded 50
         , BG.color C.darkBase1
         , onClick StartPauseClicked
+        , onDoubleClick ResetActive
         , centerX
+        , pointer
         ]
         (column
             [ mouseOver [ Border.glow color 10 ]
@@ -218,7 +302,7 @@ timerListItem accent index timer_ msg =
         , height (px 75)
         , Border.rounded 10
         , BG.color C.darkBase1
-        , onClick <| msg index
+        , onClick (msg index)
         ]
         (column
             [ mouseOver [ Border.glow accent 3 ]
@@ -248,6 +332,7 @@ queListItem c i t =
         , height (px 75)
         , Border.rounded 10
         , BG.color C.darkBase1
+        , pointer
         , onClick <| QueTimerClicked i
         ]
         (column
@@ -278,6 +363,7 @@ doneListItem c i t =
         , height (px 75)
         , Border.rounded 10
         , BG.color C.darkBase1
+        , pointer
         , onClick <| DoneTimerClicked i
         ]
         (column
@@ -382,19 +468,16 @@ reccTryShiftForward i m =
                 in
                 reccTryShiftForward i (Paused newQue newActive newDone)
 
-        Stopped que active ->
+        Edit que active done ->
             if List.length que == i then
                 m
 
             else
                 let
                     ( newQue, newActive, newDone ) =
-                        tryShiftForward ( que, active, [] )
+                        tryShiftForward ( que, active, done )
                 in
-                reccTryShiftForward i (Running newQue newActive newDone)
-
-        _ ->
-            m
+                reccTryShiftForward i (Paused newQue newActive newDone)
 
 
 reccTryShiftBackwardsEntry : Int -> Model -> Model
@@ -414,8 +497,12 @@ reccTryShiftBackwardsEntry i m =
             in
             reccTryShiftBackwards targetLength m
 
-        _ ->
-            m
+        Edit _ _ done ->
+            let
+                targetLength =
+                    List.length done - (i + 1)
+            in
+            reccTryShiftBackwards targetLength m
 
 
 reccTryShiftBackwards : Int -> Model -> Model
@@ -443,8 +530,16 @@ reccTryShiftBackwards i m =
                 in
                 reccTryShiftBackwards i (Paused newQue newActive newDone)
 
-        _ ->
-            m
+        Edit que active done ->
+            if List.length done == i then
+                m
+
+            else
+                let
+                    ( newQue, newActive, newDone ) =
+                        tryShiftBackwards ( que, active, done )
+                in
+                reccTryShiftBackwards i (Paused newQue newActive newDone)
 
 
 
