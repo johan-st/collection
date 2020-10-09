@@ -39,12 +39,12 @@ type Model
 init : Model
 init =
     Paused
-        [ timer "stretch" 60 Coin
-        , timer "Vlad" 900 Correct
-        , timer "stretch" 60 Coin
-        , timer "Viktor" 900 Correct
+        [ timer "stretch" 6 Coin
+        , timer "Vlad" 9 Correct
+        , timer "stretch" 6 Coin
+        , timer "Viktor" 9 Correct
         ]
-        (timer "Johan" 900 Correct)
+        (timer "Johan" 9 Correct)
         []
 
 
@@ -79,7 +79,7 @@ update msg model =
                             ( newQue, newActive, newDone ) =
                                 tryShiftForward ( que, active, done )
                         in
-                        ( Running newQue newActive newDone, soundPort Correct )
+                        ( Running newQue newActive newDone, soundPort active.sound )
 
                 _ ->
                     ( model, Cmd.none )

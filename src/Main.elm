@@ -299,8 +299,18 @@ toSearch model mainCmd ( searchModel, cmd ) =
 
 
 toTimer : Model -> ( Timer.Model, Cmd Timer.Msg ) -> ( Model, Cmd Msg )
-toTimer model ( searchModel, cmd ) =
-    ( { model | page = Page.Timer searchModel }
+toTimer model ( timerModel, cmd ) =
+    let
+        newTimer =
+            Page.Timer timerModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | timer = timerModel }
+    in
+    ( { model | page = Page.Timer timerModel, persistance = newPersist }
     , Cmd.map GotTimerMsg cmd
     )
 
