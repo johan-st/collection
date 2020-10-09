@@ -71,7 +71,7 @@ init flags url key =
     ( { key = key
       , url = url
       , page = page
-      , persistance = initialPersistance flags
+      , persistance = persist
       , time = Time.millisToPosix 0
       , zone = Time.utc
       }
@@ -553,10 +553,14 @@ persistDecoderHelper : String -> D.Decoder PersistV2
 persistDecoderHelper versionString =
     case versionString of
         "v2" ->
-            D.map PersistV2 persistDecoder
+            D.map4 PersistV2
+                (D.field "fizzbuzz" FizzBuzz.modelDecoder)
+                (D.field "numerals" Numeral.modelDecoder)
+                (D.field "prime" Prime.modelDecoder)
+                (D.field "timer" Timer.modelDecoder)
 
         _ ->
-            D.fail "unhandled version"
+            D.fail "unhandled storage version"
 
 
 persistDecoder : D.Decoder PersistV2

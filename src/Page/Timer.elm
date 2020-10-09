@@ -488,6 +488,58 @@ port soundPortActual : String -> Cmd msg
 --     | Ended Timer (List Timer)
 
 
+modelDecoder : D.Decoder Model
+modelDecoder =
+    D.field "state" D.string
+        |> D.andThen modelDecoderHelper
+
+
+modelDecoderHelper : String -> D.Decoder Model
+modelDecoderHelper state =
+    case state of
+        "Stopped" ->
+            D.map2 Stopped
+                (D.field "que" (D.list timerDecoder))
+                (D.field "active" timerDecoder)
+
+        "Paused" ->
+            D.map3 Paused
+                (D.field "que" (D.list timerDecoder))
+                (D.field "active" timerDecoder)
+                (D.field "done" (D.list timerDecoder))
+
+        _ ->
+            Debug.todo ""
+
+
+timerDecoder : D.Decoder Timer
+timerDecoder =
+    D.map4 Timer
+        (D.field "name" D.string)
+        (D.field "length" D.int)
+        (D.field "timePassed" D.int)
+        (D.field "sound" (D.andThen soundDecoder D.string))
+
+
+soundDecoder : String -> D.Decoder Sound
+soundDecoder sound =
+    case sound of
+        "click" ->
+            D.succeed Click
+
+        "jingle" ->
+            D.succeed Jingle
+
+        "coin" ->
+            D.succeed Coin
+
+        "correct" ->
+            D.succeed Correct
+
+        _ ->
+            D.fail "Failed to decode sound"
+
+
 modelEncoder : Model -> E.Value
 modelEncoder model =
     case model of
@@ -539,7 +591,7 @@ soundEncoder s =
             E.string "click"
 
         Jingle ->
-            E.string "length"
+            E.string "jingle"
 
         Coin ->
             E.string "coin"
