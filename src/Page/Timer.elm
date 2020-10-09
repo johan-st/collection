@@ -44,9 +44,8 @@ init =
         , timer "Vlad" 900 Correct
         , timer "short" 60 Coin
         , timer "Viktor" 900 Correct
-
         ]
-        (timer "Johan" 9 Correct)
+        (timer "Johan" 900 Correct)
         []
 
 
@@ -66,7 +65,7 @@ type Msg
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 25 Tick
+    Time.every 1000 Tick
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -748,11 +747,10 @@ modelDecoder =
 modelDecoderHelper : String -> D.Decoder Model
 modelDecoderHelper state =
     case state of
-        "Stopped" ->
-            D.map2 Stopped
-                (D.field "que" (D.list timerDecoder))
-                (D.field "active" timerDecoder)
-
+        -- "Stopped" ->
+        --     D.map2 Stopped
+        --         (D.field "que" (D.list timerDecoder))
+        --         (D.field "active" timerDecoder)
         "Paused" ->
             D.map3 Paused
                 (D.field "que" (D.list timerDecoder))
@@ -794,13 +792,12 @@ soundDecoder sound =
 modelEncoder : Model -> E.Value
 modelEncoder model =
     case model of
-        Stopped que act ->
-            E.object
-                [ ( "state", E.string "Stopped" )
-                , ( "que", E.list timerEncoder que )
-                , ( "active", timerEncoder act )
-                ]
-
+        -- Stopped que act ->
+        --     E.object
+        --         [ ( "state", E.string "Stopped" )
+        --         , ( "que", E.list timerEncoder que )
+        --         , ( "active", timerEncoder act )
+        --         ]
         Paused que act done ->
             E.object
                 [ ( "state", E.string "Paused" )
@@ -817,12 +814,17 @@ modelEncoder model =
                 , ( "done", E.list timerEncoder done )
                 ]
 
-        Ended act done ->
-            E.object
-                [ ( "state", E.string "Ended" )
-                , ( "active", timerEncoder act )
-                , ( "done", E.list timerEncoder done )
-                ]
+        _ ->
+            E.string "broken"
+
+
+
+-- Ended act done ->
+--     E.object
+--         [ ( "state", E.string "Ended" )
+--         , ( "active", timerEncoder act )
+--         , ( "done", E.list timerEncoder done )
+--         ]
 
 
 timerEncoder : Timer -> E.Value
