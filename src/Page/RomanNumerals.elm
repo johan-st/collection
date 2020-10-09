@@ -205,8 +205,7 @@ modelDecoder =
 
 numeralDecoder : D.Decoder Numeral
 numeralDecoder =
-    D.string
-        |> D.andThen numHelper
+    D.andThen numHelper D.string
 
 
 numHelper : String -> D.Decoder Numeral

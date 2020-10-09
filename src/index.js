@@ -17,7 +17,7 @@ app.ports.log.subscribe((log) => console.log("elm-log-port:\n", log));
 // // Listen for commands from the `setStorage` port.
 // // Turn the data to a string and put it in localStorage.
 app.ports.setPersist.subscribe((persist) => {
-  console.log("setPersist: ", persist);
+  // console.log("setPersist: ", persist);
   localStorage.setItem("elm-model", JSON.stringify(persist));
 });
 // playSound
@@ -38,4 +38,4 @@ app.ports.soundPortActual.subscribe((select) => {
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.register();
+serviceWorker.unregister();
