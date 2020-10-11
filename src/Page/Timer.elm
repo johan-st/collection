@@ -41,7 +41,7 @@ init : Model
 init =
     Paused
         []
-        (timer "sample" 60 Correct)
+        (timer "new" 600 Correct)
         []
 
 
@@ -57,6 +57,8 @@ type Msg
     | TimerNameChanged String
     | TimerMinuteChanged String
     | TimerSecondChanged String
+    | DeleteTimer
+    | AddTimer
 
 
 subscriptions : Model -> Sub Msg
@@ -130,13 +132,13 @@ update msg model =
                                     newActive =
                                         { active | length = int * 60 + sec }
                                 in
-                                ( Edit que newActive done (toMinSec newActive), Cmd.none )
+                                ( Edit que newActive done (toMinSec newActive), soundPort Click )
 
                             else
-                                ( Edit que active done (toMinSec active), Cmd.none )
+                                ( Edit que active done (toMinSec active), soundPort Wrong )
 
                         Nothing ->
-                            ( Edit que active done ( 0, sec ), Cmd.none )
+                            ( Edit que active done ( 0, sec ), soundPort Wrong )
 
                 _ ->
                     ( model, Cmd.none )
@@ -151,13 +153,47 @@ update msg model =
                                     newActive =
                                         { active | length = min * 60 + int }
                                 in
-                                ( Edit que newActive done (toMinSec newActive), Cmd.none )
+                                ( Edit que newActive done (toMinSec newActive), soundPort Click )
 
                             else
-                                ( Edit que active done ( min, sec ), Cmd.none )
+                                ( Edit que active done ( min, sec ), soundPort Wrong )
 
                         Nothing ->
-                            ( Edit que active done ( min, 0 ), Cmd.none )
+                            ( Edit que active done ( min, 0 ), soundPort Wrong )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        DeleteTimer ->
+            case model of
+                Edit que active done ( min, sec ) ->
+                    case que of
+                        head :: tail ->
+                            ( Edit tail head done (toMinSec head), soundPort Click )
+
+                        _ ->
+                            case done of
+                                head :: tail ->
+                                    ( Edit que head tail (toMinSec head), soundPort Click )
+
+                                _ ->
+                                    let
+                                        newActive =
+                                            timer "new" 60 Correct
+                                    in
+                                    ( Edit [] newActive [] (toMinSec newActive), soundPort Wrong )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        AddTimer ->
+            case model of
+                Edit que active done ( min, sec ) ->
+                    let
+                        newActive =
+                            timer "new" 60 Correct
+                    in
+                    ( Edit (active :: que) newActive done ( min, sec ), soundPort Click )
 
                 _ ->
                     ( model, Cmd.none )
@@ -248,7 +284,7 @@ editorView que active done ( min, sec ) =
             [ paddingXY 15 100, width fill, spacing 10 ]
             [ editQueView que, editTimer active ( min, sec ), editDoneView done ]
         , wrappedRow [ padding 15, spacing 10, centerX ]
-            [ resetButton, editButton ]
+            [ deleteButton, addButton, resetButton, editButton ]
         ]
 
 
@@ -356,6 +392,36 @@ resetButton =
             [ Border.glow C.accent3 5 ]
         ]
         (text "reset all")
+
+
+deleteButton : Element Msg
+deleteButton =
+    el
+        [ Border.rounded 10
+        , Border.width 1
+        , padding 20
+        , centerX
+        , onClick DeleteTimer
+        , pointer
+        , mouseOver
+            [ Border.glow C.accent3 5 ]
+        ]
+        (text "delete selected")
+
+
+addButton : Element Msg
+addButton =
+    el
+        [ Border.rounded 10
+        , Border.width 1
+        , padding 20
+        , centerX
+        , onClick AddTimer
+        , pointer
+        , mouseOver
+            [ Border.glow C.accent3 5 ]
+        ]
+        (text "add timer")
 
 
 editButton : Element Msg
@@ -704,6 +770,7 @@ type Sound
     | Jingle
     | Coin
     | Correct
+    | Wrong
 
 
 soundPort : Sound -> Cmd Msg
@@ -720,6 +787,9 @@ soundPort sound =
 
         Correct ->
             soundPortActual "correct"
+
+        Wrong ->
+            soundPortActual "wrong"
 
 
 port soundPortActual : String -> Cmd msg
@@ -780,6 +850,9 @@ soundDecoder sound =
 
         "correct" ->
             D.succeed Correct
+
+        "wrong" ->
+            D.succeed Wrong
 
         _ ->
             D.fail "Failed to decode sound"
@@ -847,3 +920,6 @@ soundEncoder s =
 
         Correct ->
             E.string "correct"
+
+        Wrong ->
+            E.string "wrong"
