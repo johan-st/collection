@@ -22,13 +22,9 @@ type alias Timer =
     }
 
 
-timer : String -> Int -> Sound -> Timer
-timer name length sound =
-    { name = name
-    , length = length
-    , timePassed = 0
-    , sound = sound
-    }
+defaultTimer : Timer
+defaultTimer =
+    Timer "timer" 540 0 Correct
 
 
 type Model
@@ -41,7 +37,7 @@ init : Model
 init =
     Paused
         []
-        (timer "new" 600 Correct)
+        defaultTimer
         []
 
 
@@ -130,7 +126,7 @@ update msg model =
                             if int < 99 then
                                 let
                                     newActive =
-                                        { active | length = int * 60 + sec }
+                                        { active | timePassed = 0, length = int * 60 + sec }
                                 in
                                 ( Edit que newActive done (toMinSec newActive), soundPort Click )
 
@@ -151,7 +147,7 @@ update msg model =
                             if int < 60 then
                                 let
                                     newActive =
-                                        { active | length = min * 60 + int }
+                                        { active | timePassed = 0, length = min * 60 + int }
                                 in
                                 ( Edit que newActive done (toMinSec newActive), soundPort Click )
 
@@ -177,11 +173,7 @@ update msg model =
                                     ( Edit que head tail (toMinSec head), soundPort Click )
 
                                 _ ->
-                                    let
-                                        newActive =
-                                            timer "new" 60 Correct
-                                    in
-                                    ( Edit [] newActive [] (toMinSec newActive), soundPort Wrong )
+                                    ( Edit [] defaultTimer [] (toMinSec defaultTimer), soundPort Wrong )
 
                 _ ->
                     ( model, Cmd.none )
@@ -189,11 +181,7 @@ update msg model =
         AddTimer ->
             case model of
                 Edit que active done ( min, sec ) ->
-                    let
-                        newActive =
-                            timer "new" 60 Correct
-                    in
-                    ( Edit (active :: que) newActive done ( min, sec ), soundPort Click )
+                    ( Edit (active :: que) defaultTimer done ( min, sec ), soundPort Click )
 
                 _ ->
                     ( model, Cmd.none )
@@ -283,16 +271,26 @@ editorView que active done ( min, sec ) =
         [ wrappedRow
             [ paddingXY 15 100, width fill, spacing 10 ]
             [ editQueView que, editTimer active ( min, sec ), editDoneView done ]
-        , wrappedRow [ padding 15, spacing 10, centerX ]
-            [ deleteButton, addButton, resetButton, editButton ]
+        , row [ padding 15, spacing 10, centerX ]
+            [ resetButton, editButton ]
+        , row [ padding 15, spacing 10, centerX ]
+            [ deleteButton, addButton ]
         ]
+
+
+bigFont =
+    Font.size 50
+
+
+smallFont =
+    Font.size 17
 
 
 editTimer : Timer -> ( Int, Int ) -> Element Msg
 editTimer t ( min, sec ) =
     el
         [ Font.color C.accent1
-        , Font.size 60
+        , bigFont
         , width <| fillPortion 3
         , Border.innerGlow C.accent1 10
         , width (px 250)
@@ -322,7 +320,7 @@ editTimer t ( min, sec ) =
                 { onChange = TimerNameChanged
                 , text = t.name
                 , placeholder = Nothing
-                , label = Input.labelHidden "timer label"
+                , label = Input.labelHidden "name"
                 }
             , row [ centerX, centerY ]
                 [ Input.text
@@ -371,10 +369,10 @@ editTimer t ( min, sec ) =
 timersView : Color -> List Timer -> Timer -> List Timer -> Element Msg
 timersView color que active done =
     column [ centerX ]
-        [ wrappedRow
+        [ row
             [ paddingXY 15 100, width fill, spacing 10 ]
             [ queView que, activeTimer color active, doneView done ]
-        , wrappedRow [ padding 15, spacing 10, centerX ]
+        , row [ padding 15, spacing 10, centerX ]
             [ resetButton, editButton ]
         ]
 
@@ -419,7 +417,7 @@ addButton =
         , onClick AddTimer
         , pointer
         , mouseOver
-            [ Border.glow C.accent3 5 ]
+            [ Border.glow C.accent2 5 ]
         ]
         (text "add timer")
 
@@ -443,7 +441,7 @@ activeTimer : Color -> Timer -> Element Msg
 activeTimer color t =
     el
         [ Font.color color
-        , Font.size 60
+        , bigFont
         , width <| fillPortion 3
         , Border.innerGlow color 10
         , width (px 250)
@@ -464,7 +462,7 @@ activeTimer color t =
             , centerY
             ]
             [ el [ centerX, centerY ] <| text <| t.name
-            , el [ centerX, centerY ] <|
+            , el [ centerX, centerY, bigFont ] <|
                 text <|
                     timeToString <|
                         timeLeft t
@@ -487,7 +485,7 @@ timeLeft t =
 
 editQueView : List Timer -> Element Msg
 editQueView que =
-    row
+    wrappedRow
         [ Font.color C.accent1
         , width <| fillPortion 1
         , spacing 5
@@ -499,7 +497,7 @@ editQueView que =
 
 editDoneView : List Timer -> Element Msg
 editDoneView que =
-    row
+    wrappedRow
         [ Font.color C.accent1
         , width <| fillPortion 1
         , spacing 5
@@ -510,7 +508,7 @@ editDoneView que =
 
 queView : List Timer -> Element Msg
 queView que =
-    row
+    wrappedRow
         [ Font.color C.accent4
         , width <| fillPortion 1
         , spacing 5
@@ -522,7 +520,7 @@ queView que =
 
 doneView : List Timer -> Element Msg
 doneView que =
-    row
+    wrappedRow
         [ Font.color C.subtle
         , width <| fillPortion 1
         , spacing 5
@@ -535,7 +533,7 @@ queListItem : Color -> Int -> Timer -> Element Msg
 queListItem c i t =
     el
         [ Font.color c
-        , Font.size 20
+        , smallFont
         , width <| fillPortion 3
         , Border.innerGlow c 3
         , width (px 75)
@@ -554,7 +552,7 @@ queListItem c i t =
             , centerY
             ]
             [ el [ centerX, centerY ] <| text <| t.name
-            , el [ centerX, centerY ] <|
+            , el [ centerX, centerY, smallFont ] <|
                 text <|
                     timeToString <|
                         timeLeft t
@@ -566,7 +564,7 @@ doneListItem : Color -> Int -> Timer -> Element Msg
 doneListItem c i t =
     el
         [ Font.color c
-        , Font.size 20
+        , smallFont
         , width <| fillPortion 3
         , Border.innerGlow c 3
         , width (px 75)
@@ -585,7 +583,7 @@ doneListItem c i t =
             , centerY
             ]
             [ el [ centerX, centerY ] <| text <| t.name
-            , el [ centerX, centerY ] <|
+            , el [ centerX, centerY, smallFont ] <|
                 text <|
                     timeToString <|
                         timeLeft t
