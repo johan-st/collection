@@ -21,6 +21,11 @@ type alias Model =
     String
 
 
+init : Model
+init =
+    "12"
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg _ =
     case msg of

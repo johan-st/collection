@@ -26,9 +26,9 @@ type Msg
     = SliderMoved Float
 
 
-init : Float -> Model
-init slider =
-    { slider = slider
+init : Model
+init =
+    { slider = 16
     }
 
 

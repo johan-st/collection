@@ -1,4 +1,4 @@
-module Tests exposing (..)
+module Katas exposing (..)
 
 import Arithmetic exposing (primeFactors)
 import Expect exposing (equal)
@@ -13,8 +13,8 @@ import Test exposing (..)
 -- Check out https://package.elm-lang.org/packages/elm-explorations/test/latest to learn more about testing in Elm!
 
 
-all : Test
-all =
+katas : Test
+katas =
     describe "Logic"
         [ describe "FizzBuzz"
             [ fuzz (intRange 1 9999) "Positive Numbers" <|

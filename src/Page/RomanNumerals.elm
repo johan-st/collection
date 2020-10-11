@@ -237,3 +237,8 @@ numHelper num =
                 "Trying to decode a Numeral, but "
                     ++ num
                     ++ " is not a valid one."
+
+
+init : Model
+init =
+    Model "" []

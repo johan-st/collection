@@ -84,9 +84,9 @@ initialPersistance flags =
     case D.decodeString persistDecoder flags of
         Result.Err _ ->
             PersistV2
-                (FizzBuzz.init 7)
-                (Numeral.Model "" [])
-                ""
+                FizzBuzz.init
+                Numeral.init
+                Prime.init
                 Timer.init
 
         Ok data ->
