@@ -67,20 +67,20 @@ update msg model =
     case msg of
         Tick _ ->
             case model of
-                Running que active done ->
+                Running done active que ->
                     let
                         newElapsed =
                             active.timePassed + 1
                     in
                     if timeLeft active > 0 then
-                        ( Running que { active | timePassed = newElapsed } done, Cmd.none )
+                        ( Running done { active | timePassed = newElapsed } que, Cmd.none )
 
                     else
                         let
-                            ( newQue, newActive, newDone ) =
-                                tryShiftForward ( que, active, done )
+                            ( newDone, newActive, newQue ) =
+                                tryShiftForward ( done, active, que )
                         in
-                        ( Running newQue newActive newDone, soundPort active.sound )
+                        ( Running newDone newActive newQue, soundPort active.sound )
 
                 _ ->
                     ( model, Cmd.none )
@@ -108,19 +108,19 @@ update msg model =
 
         TimerNameChanged name ->
             case model of
-                Edit que active done ( min, sec ) ->
+                Edit done active que ( min, sec ) ->
                     let
                         newActive =
                             { active | name = name }
                     in
-                    ( Edit que newActive done (toMinSec newActive), soundPort Click )
+                    ( Edit done newActive que (toMinSec newActive), soundPort Click )
 
                 _ ->
                     ( model, Cmd.none )
 
         TimerMinuteChanged newMin ->
             case model of
-                Edit que active done ( min, sec ) ->
+                Edit done active que ( min, sec ) ->
                     case String.toInt newMin of
                         Just int ->
                             if int < 99 then
@@ -128,20 +128,20 @@ update msg model =
                                     newActive =
                                         { active | timePassed = 0, length = int * 60 + sec }
                                 in
-                                ( Edit que newActive done (toMinSec newActive), soundPort Click )
+                                ( Edit done newActive que (toMinSec newActive), soundPort Click )
 
                             else
-                                ( Edit que active done (toMinSec active), soundPort Wrong )
+                                ( Edit done active que (toMinSec active), soundPort Wrong )
 
                         Nothing ->
-                            ( Edit que active done ( 0, sec ), soundPort Wrong )
+                            ( Edit done active que ( 0, sec ), soundPort Wrong )
 
                 _ ->
                     ( model, Cmd.none )
 
         TimerSecondChanged newSec ->
             case model of
-                Edit que active done ( min, sec ) ->
+                Edit done active que ( min, sec ) ->
                     case String.toInt newSec of
                         Just int ->
                             if int < 60 then
@@ -149,28 +149,28 @@ update msg model =
                                     newActive =
                                         { active | timePassed = 0, length = min * 60 + int }
                                 in
-                                ( Edit que newActive done (toMinSec newActive), soundPort Click )
+                                ( Edit done newActive que (toMinSec newActive), soundPort Click )
 
                             else
-                                ( Edit que active done ( min, sec ), soundPort Wrong )
+                                ( Edit done active que ( min, sec ), soundPort Wrong )
 
                         Nothing ->
-                            ( Edit que active done ( min, 0 ), soundPort Wrong )
+                            ( Edit done active que ( min, 0 ), soundPort Wrong )
 
                 _ ->
                     ( model, Cmd.none )
 
         DeleteTimer ->
             case model of
-                Edit que active done ( min, sec ) ->
+                Edit done active que ( min, sec ) ->
                     case que of
                         head :: tail ->
-                            ( Edit tail head done (toMinSec head), soundPort Click )
+                            ( Edit done head tail (toMinSec head), soundPort Click )
 
                         _ ->
                             case done of
                                 head :: tail ->
-                                    ( Edit que head tail (toMinSec head), soundPort Click )
+                                    ( Edit tail head que (toMinSec head), soundPort Click )
 
                                 _ ->
                                     ( Edit [] defaultTimer [] (toMinSec defaultTimer), soundPort Wrong )
@@ -180,8 +180,8 @@ update msg model =
 
         AddTimer ->
             case model of
-                Edit que active done ( min, sec ) ->
-                    ( Edit (active :: que) defaultTimer done ( min, sec ), soundPort Click )
+                Edit done active que ( min, sec ) ->
+                    ( Edit done defaultTimer (active :: que) ( min, sec ), soundPort Click )
 
                 _ ->
                     ( model, Cmd.none )
@@ -190,14 +190,14 @@ update msg model =
 resetActive : Model -> Model
 resetActive model =
     case model of
-        Paused que active done ->
-            Paused que { active | timePassed = 0 } done
+        Paused done active que ->
+            Paused done { active | timePassed = 0 } que
 
-        Running que active done ->
-            Paused que { active | timePassed = 0 } done
+        Running done active que ->
+            Paused done { active | timePassed = 0 } que
 
-        Edit que active done _ ->
-            Paused que { active | timePassed = 0 } done
+        Edit done active que _ ->
+            Paused done { active | timePassed = 0 } que
 
 
 
@@ -207,70 +207,70 @@ resetActive model =
 resetAll : Model -> Model
 resetAll model =
     case model of
-        Paused que active done ->
+        Paused done active que ->
             Paused
-                (List.map (\t -> { t | timePassed = 0 }) que)
-                { active | timePassed = 0 }
                 (List.map (\t -> { t | timePassed = 0 }) done)
+                { active | timePassed = 0 }
+                (List.map (\t -> { t | timePassed = 0 }) que)
 
-        Running que active done ->
+        Running done active que ->
             Paused
-                (List.map (\t -> { t | timePassed = 0 }) que)
-                { active | timePassed = 0 }
                 (List.map (\t -> { t | timePassed = 0 }) done)
+                { active | timePassed = 0 }
+                (List.map (\t -> { t | timePassed = 0 }) que)
 
-        Edit que active done ( min, sec ) ->
+        Edit done active que ( min, sec ) ->
             Paused
-                (List.map (\t -> { t | timePassed = 0 }) que)
-                { active | timePassed = 0 }
                 (List.map (\t -> { t | timePassed = 0 }) done)
+                { active | timePassed = 0 }
+                (List.map (\t -> { t | timePassed = 0 }) que)
 
 
 playPause : Model -> Model
 playPause model =
     case model of
-        Paused que active done ->
-            Running que active done
+        Paused done active que ->
+            Running done active que
 
-        Running que active done ->
-            Paused que active done
+        Running done active que ->
+            Paused done active que
 
-        Edit que active done ( min, sec ) ->
-            Edit que active done ( min, sec )
+        Edit done active que ( min, sec ) ->
+            Edit done active que ( min, sec )
 
 
 editToggle : Model -> Model
 editToggle model =
     case model of
-        Paused que active done ->
-            Edit que active done (toMinSec active)
+        Paused done active que ->
+            Edit done active que (toMinSec active)
 
-        Running que active done ->
-            Edit que active done (toMinSec active)
+        Running done active que ->
+            Edit done active que (toMinSec active)
 
-        Edit que active done _ ->
-            Paused que active done
+        Edit done active que _ ->
+            Paused done active que
 
 
 view : Model -> Element Msg
 view model =
     case model of
-        Paused que active done ->
-            timersView C.accent3 que active done
+        Paused done active que ->
+            timersView C.accent3 done active que
 
-        Running que active done ->
-            timersView C.accent2 que active done
+        Running done active que ->
+            timersView C.accent2 done active que
 
-        Edit que active done ( min, sec ) ->
-            editorView que active done ( min, sec )
+        Edit done active que ( min, sec ) ->
+            editorView done active que ( min, sec )
 
 
 editorView : List Timer -> Timer -> List Timer -> ( Int, Int ) -> Element Msg
-editorView que active done ( min, sec ) =
+editorView done active que ( min, sec ) =
     column [ centerX ]
         [ wrappedRow
             [ paddingXY 15 100, width fill, spacing 10 ]
-            [ editQueView que, editTimer active ( min, sec ), editDoneView done ]
+            [ editDoneView done, editTimer active ( min, sec ), editQueView que ]
         , row [ padding 15, spacing 10, centerX ]
             [ resetButton, editButton ]
         , row [ padding 15, spacing 10, centerX ]
@@ -367,11 +367,11 @@ editTimer t ( min, sec ) =
 
 
 timersView : Color -> List Timer -> Timer -> List Timer -> Element Msg
-timersView color que active done =
+timersView color done active que =
     column [ centerX ]
         [ row
             [ paddingXY 15 100, width fill, spacing 10 ]
-            [ queView que, activeTimer color active, doneView done ]
+            [ doneView done, activeTimer color active, queView que ]
         , row [ padding 15, spacing 10, centerX ]
             [ resetButton, editButton ]
         ]
@@ -496,14 +496,14 @@ editQueView que =
 
 
 editDoneView : List Timer -> Element Msg
-editDoneView que =
+editDoneView done =
     wrappedRow
         [ Font.color C.accent1
         , width <| fillPortion 1
         , spacing 5
         ]
     <|
-        List.indexedMap (doneListItem C.accent1) que
+        List.indexedMap (doneListItem C.accent1) done
 
 
 queView : List Timer -> Element Msg
@@ -519,14 +519,14 @@ queView que =
 
 
 doneView : List Timer -> Element Msg
-doneView que =
+doneView done =
     wrappedRow
         [ Font.color C.subtle
         , width <| fillPortion 1
         , spacing 5
         ]
     <|
-        List.indexedMap (doneListItem C.subtle) que
+        List.indexedMap (doneListItem C.subtle) done
 
 
 queListItem : Color -> Int -> Timer -> Element Msg
@@ -611,7 +611,7 @@ timeToString timeInSecs =
 
 
 tryShiftForward : ( List Timer, Timer, List Timer ) -> ( List Timer, Timer, List Timer )
-tryShiftForward ( que, active, done ) =
+tryShiftForward ( done, active, que ) =
     let
         maybeActive =
             que
@@ -627,14 +627,14 @@ tryShiftForward ( que, active, done ) =
     in
     case maybeActive of
         Just justActive ->
-            ( shorterTail, justActive, newDone )
+            ( newDone, justActive, shorterTail )
 
         Nothing ->
-            ( que, active, done )
+            ( done, active, que )
 
 
 tryShiftBackwards : ( List Timer, Timer, List Timer ) -> ( List Timer, Timer, List Timer )
-tryShiftBackwards ( que, active, done ) =
+tryShiftBackwards ( done, active, que ) =
     let
         maybeActive =
             List.head done
@@ -649,47 +649,47 @@ tryShiftBackwards ( que, active, done ) =
     in
     case maybeActive of
         Just justActive ->
-            ( newQue, justActive, shorterTail )
+            ( shorterTail, justActive, newQue )
 
         Nothing ->
-            ( que, active, done )
+            ( done, active, que )
 
 
 reccTryShiftForward : Int -> Model -> Model
 reccTryShiftForward i m =
     case m of
-        Running que active done ->
+        Running done active que ->
             if List.length que == i then
                 m
 
             else
                 let
-                    ( newQue, newActive, newDone ) =
-                        tryShiftForward ( que, active, done )
+                    ( newDone, newActive, newQue ) =
+                        tryShiftForward ( done, active, que )
                 in
-                reccTryShiftForward i (Running newQue newActive newDone)
+                reccTryShiftForward i (Running newDone newActive newQue)
 
-        Paused que active done ->
+        Paused done active que ->
             if List.length que == i then
                 m
 
             else
                 let
-                    ( newQue, newActive, newDone ) =
-                        tryShiftForward ( que, active, done )
+                    ( newDone, newActive, newQue ) =
+                        tryShiftForward ( done, active, que )
                 in
-                reccTryShiftForward i (Paused newQue newActive newDone)
+                reccTryShiftForward i (Paused newDone newActive newQue)
 
-        Edit que active done ( min, sec ) ->
+        Edit done active que ( min, sec ) ->
             if List.length que == i then
                 m
 
             else
                 let
-                    ( newQue, newActive, newDone ) =
-                        tryShiftForward ( que, active, done )
+                    ( newDone, newActive, newQue ) =
+                        tryShiftForward ( done, active, que )
                 in
-                reccTryShiftForward i (Edit newQue newActive newDone (toMinSec newActive))
+                reccTryShiftForward i (Edit newDone newActive newQue (toMinSec newActive))
 
 
 toMinSec : Timer -> ( Int, Int )
@@ -725,38 +725,38 @@ reccTryShiftBackwardsEntry i m =
 reccTryShiftBackwards : Int -> Model -> Model
 reccTryShiftBackwards i m =
     case m of
-        Running que active done ->
+        Running done active que ->
             if List.length done == i then
                 m
 
             else
                 let
-                    ( newQue, newActive, newDone ) =
-                        tryShiftBackwards ( que, active, done )
+                    ( newDone, newActive, newQue ) =
+                        tryShiftBackwards ( done, active, que )
                 in
-                reccTryShiftBackwards i (Running newQue newActive newDone)
+                reccTryShiftBackwards i (Running newDone newActive newQue)
 
-        Paused que active done ->
+        Paused done active que ->
             if List.length done == i then
                 m
 
             else
                 let
-                    ( newQue, newActive, newDone ) =
-                        tryShiftBackwards ( que, active, done )
+                    ( newDone, newActive, newQue ) =
+                        tryShiftBackwards ( done, active, que )
                 in
-                reccTryShiftBackwards i (Paused newQue newActive newDone)
+                reccTryShiftBackwards i (Paused newDone newActive newQue)
 
-        Edit que active done ( min, sec ) ->
+        Edit done active que ( min, sec ) ->
             if List.length done == i then
                 m
 
             else
                 let
-                    ( newQue, newActive, newDone ) =
-                        tryShiftBackwards ( que, active, done )
+                    ( newDone, newActive, newQue ) =
+                        tryShiftBackwards ( done, active, que )
                 in
-                reccTryShiftBackwards i (Edit newQue newActive newDone (toMinSec newActive))
+                reccTryShiftBackwards i (Edit newDone newActive newQue (toMinSec newActive))
 
 
 
@@ -795,11 +795,6 @@ port soundPortActual : String -> Cmd msg
 
 
 -- ENDODE / DECODE
--- type Model
---     = Stopped (List Timer) Timer
---     | Paused (List Timer) Timer (List Timer)
---     | Running (List Timer) Timer (List Timer)
---     | Ended Timer (List Timer)
 
 
 modelDecoder : D.Decoder Model
@@ -841,7 +836,8 @@ soundDecoder sound =
             D.succeed Click
 
         "jingle" ->
-            D.succeed Jingle
+            D.succeed
+                Jingle
 
         "coin" ->
             D.succeed Coin
@@ -859,12 +855,6 @@ soundDecoder sound =
 modelEncoder : Model -> E.Value
 modelEncoder model =
     case model of
-        -- Stopped que act ->
-        --     E.object
-        --         [ ( "state", E.string "Stopped" )
-        --         , ( "que", E.list timerEncoder que )
-        --         , ( "active", timerEncoder act )
-        --         ]
         Paused que act done ->
             E.object
                 [ ( "state", E.string "Paused" )
@@ -883,15 +873,6 @@ modelEncoder model =
 
         _ ->
             E.string "broken"
-
-
-
--- Ended act done ->
---     E.object
---         [ ( "state", E.string "Ended" )
---         , ( "active", timerEncoder act )
---         , ( "done", E.list timerEncoder done )
---         ]
 
 
 timerEncoder : Timer -> E.Value
