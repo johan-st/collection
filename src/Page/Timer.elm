@@ -40,12 +40,8 @@ type Model
 init : Model
 init =
     Paused
-        [ timer "short" 60 Coin
-        , timer "Vlad" 900 Correct
-        , timer "short" 60 Coin
-        , timer "Viktor" 900 Correct
-        ]
-        (timer "Johan" 900 Correct)
+        []
+        (timer "sample" 60 Correct)
         []
 
 
