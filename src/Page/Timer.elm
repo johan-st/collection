@@ -485,7 +485,7 @@ timeLeft t =
 
 editQueView : List Timer -> Element Msg
 editQueView que =
-    wrappedRow
+    row
         [ Font.color C.accent1
         , width <| fillPortion 1
         , spacing 5
@@ -497,7 +497,7 @@ editQueView que =
 
 editDoneView : List Timer -> Element Msg
 editDoneView done =
-    wrappedRow
+    row
         [ Font.color C.accent1
         , width <| fillPortion 1
         , spacing 5
@@ -508,7 +508,7 @@ editDoneView done =
 
 queView : List Timer -> Element Msg
 queView que =
-    wrappedRow
+    row
         [ Font.color C.accent4
         , width <| fillPortion 1
         , spacing 5
@@ -520,7 +520,7 @@ queView que =
 
 doneView : List Timer -> Element Msg
 doneView done =
-    wrappedRow
+    row
         [ Font.color C.subtle
         , width <| fillPortion 1
         , spacing 5
@@ -806,10 +806,6 @@ modelDecoder =
 modelDecoderHelper : String -> D.Decoder Model
 modelDecoderHelper state =
     case state of
-        -- "Stopped" ->
-        --     D.map2 Stopped
-        --         (D.field "que" (D.list timerDecoder))
-        --         (D.field "active" timerDecoder)
         "Paused" ->
             D.map3 Paused
                 (D.field "que" (D.list timerDecoder))
