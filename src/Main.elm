@@ -1,19 +1,9 @@
 port module Main exposing (..)
 
-import Bootstrap.Alert as Alert
-import Bootstrap.Button as Button
-import Bootstrap.Card as Card
-import Bootstrap.Card.Block as Block
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid.Row as Col
-import Bootstrap.ListGroup as Listgroup
-import Bootstrap.Modal as Modal
-import Bootstrap.Navbar as Navbar
 import Browser exposing (UrlRequest)
 import Browser.Navigation as Navigation
-import Html exposing (Html, div, h1, h2, text)
-import Html.Attributes exposing (..)
+import Html exposing (..)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_)
 import Html.Events exposing (onClick)
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
@@ -22,7 +12,7 @@ import Page.Page as Page exposing (Page(..))
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numeral exposing (Numeral(..))
 import Page.Search as Search
-import Page.Timer as Timer
+import Page.Timer as Timer exposing (..)
 import Page.Visuals as Visuals
 import Task
 import Time
@@ -44,8 +34,6 @@ type alias Flags =
 type alias Model =
     { navKey : Navigation.Key
     , page : Page
-    , navState : Navbar.State
-    , modalVisibility : Modal.Visibility
     , url : Url.Url
     , persistance : PersistV2
     , time : Time.Posix
@@ -85,15 +73,10 @@ init flags url key =
                 _ ->
                     Page.NotFound_404
 
-        ( navState, navCmd ) =
-            Navbar.initialState NavMsg
-
         ( model, urlCmd ) =
             urlUpdate url
                 { navKey = key
                 , page = Home
-                , navState = navState
-                , modalVisibility = Modal.hidden
                 , url = url
                 , persistance = initialPersistance flags
                 , time = Time.millisToPosix 0
@@ -103,7 +86,6 @@ init flags url key =
     ( model
     , Cmd.batch
         [ urlCmd
-        , navCmd
         , Task.perform AdjustTimeZone Time.here
         , Task.perform Tick Time.now
         , log ("flags on init:\n" ++ flags)
@@ -128,9 +110,6 @@ initialPersistance flags =
 type Msg
     = ClickedLink UrlRequest
     | UrlChange Url
-    | NavMsg Navbar.State
-    | CloseModal
-    | ShowModal
     | Tick Time.Posix
     | AdjustTimeZone Time.Zone
     | GotFizzBuzzMsg FizzBuzz.Msg
@@ -155,21 +134,6 @@ update msg model =
 
         UrlChange url ->
             urlUpdate url model
-
-        NavMsg state ->
-            ( { model | navState = state }
-            , Cmd.none
-            )
-
-        CloseModal ->
-            ( { model | modalVisibility = Modal.hidden }
-            , Cmd.none
-            )
-
-        ShowModal ->
-            ( { model | modalVisibility = Modal.shown }
-            , Cmd.none
-            )
 
         Tick time ->
             ( { model | time = time }, setPersist (E.encode 1 (persistEncoder model.persistance)) )
@@ -198,11 +162,14 @@ urlUpdate url model =
                 "/katas/numerals" ->
                     Page.fromModel <| Page.N model.persistance.numerals
 
+                "/katas/primes" ->
+                    Page.fromModel <| Page.P model.persistance.primeFactors
+
                 "/visuals" ->
                     Page.fromModel <| Page.V ""
 
-                "/katas/primes" ->
-                    Page.fromModel <| Page.P model.persistance.primeFactors
+                "/resources" ->
+                    Page.Resources
 
                 "/search" ->
                     Page.Search (Search.init model.url)
@@ -220,12 +187,11 @@ urlUpdate url model =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "Elm Bootstrap"
+    { title = "Elm w/ pure-css"
     , body =
         [ div []
             [ menu model
             , mainContent model
-            , modal model
             ]
         ]
     }
@@ -233,37 +199,16 @@ view model =
 
 menu : Model -> Html Msg
 menu model =
-    Navbar.config NavMsg
-        |> Navbar.withAnimation
-        |> Navbar.container
-        |> Navbar.brand [ href "/" ] [ text "</salty noodles>" ]
-        |> Navbar.items
-            [ Navbar.dropdown
-                { id = "mydropdown"
-                , toggle = Navbar.dropdownToggle [] [ text "Katas" ]
-                , items =
-                    [ Navbar.dropdownItem
-                        [ href "/katas" ]
-                        [ text "overview" ]
-                    , Navbar.dropdownDivider
-                    , Navbar.dropdownItem
-                        [ href "/katas/fizzbuzz" ]
-                        [ text "fizzbuzz" ]
-                    , Navbar.dropdownItem
-                        [ href "/katas/roman_numerals" ]
-                        [ text "roman Numerals" ]
-                    , Navbar.dropdownItem
-                        [ href "/katas/prime_factorization" ]
-                        [ text "prime factorization" ]
-                    ]
-                }
-            , Navbar.itemLink [ href "/404" ] [ text "Get Lost" ]
+    div [ class "pure-menu pure-menu-horizontal" ]
+        [ a [ href "/", class "pure-menu-heading pure-menu-link" ] [ text "</salty noodles>" ]
+        , ul [ class "pure-menu-list" ]
+            [ li [ class "pure-menu-item" ] [ a [ href "/katas", class "pure-menu-link" ] [ text "katas" ] ]
+            , li [ class "pure-menu-item" ] [ a [ href "/timer", class "pure-menu-link" ] [ text "timer" ] ]
+            , li [ class "pure-menu-item" ] [ a [ href "/resources", class "pure-menu-link" ] [ text "links" ] ]
+            , li [ class "pure-menu-item" ] [ a [ href "/404", class "pure-menu-link" ] [ text "lost" ] ]
             ]
-        |> Navbar.customItems
-            [ Navbar.textItem []
-                [ text (timeString model.zone model.time) ]
-            ]
-        |> Navbar.view model.navState
+        , div [ class "pure-menu-item" ] [ text (timeString model.zone model.time) ]
+        ]
 
 
 mainContent : Model -> Html Msg
@@ -272,145 +217,149 @@ mainContent model =
     --     persist =
     --         model.persistance
     -- in
-    Grid.container [] <|
-        case model.page of
-            Home ->
-                pageHome model
+    case model.page of
+        Home ->
+            pageHome model
 
-            Katas ->
-                pageKatasOverview model
+        Katas ->
+            pageKatasOverview model
 
-            FizzBuzz _ ->
-                pageGettingStarted model
+        Resources ->
+            pageResources model
 
-            NotFound_404 ->
-                pageNotFound_404
-
-            _ ->
-                Debug.todo "mainContent"
+        _ ->
+            pageNotFound_404
 
 
-pageKatasOverview : Model -> List (Html Msg)
+pageResources : Model -> Html Msg
+pageResources model =
+    article [ class "pure-g" ]
+        [ section [ class "pure-menu custom-restricted-width pure-u-1 pure-u-sm-1-3" ]
+            [ span [ class "pure-menu-heading" ] [ text "elm" ]
+            , ul [ class "pure-menu-list" ]
+                [ li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://package.elm-lang.org/" ] [ text "packages" ] ]
+                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://mbylstra.github.io/html-to-elm/" ] [ text "HTML to Elm" ] ]
+                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://guide.elm-lang.org/" ] [ text "official guide" ] ]
+                ]
+            ]
+        , section [ class "pure-menu custom-restricted-width  pure-u-1 pure-u-sm-1-3" ]
+            [ span [ class "pure-menu-heading" ] [ text "javascript" ]
+            , ul [ class "pure-menu-list" ]
+                [ li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://package.elm-lang.org/" ] [ text "something" ] ]
+                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://mbylstra.github.io/html-to-elm/" ] [ text "some other thing" ] ]
+                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://guide.elm-lang.org/" ] [ text "bla bla" ] ]
+                ]
+            ]
+        ]
+
+
+pageKatasOverview : Model -> Html Msg
 pageKatasOverview model =
-    [ h1 [] [ text "Katas" ]
-    , Grid.row []
-        [ Grid.col []
-            [ Card.config [ Card.outlinePrimary ]
-                |> Card.headerH4 [] [ text "Fizzbuzz" ]
-                |> Card.block []
-                    [ Block.text [] [ text "Fizz buzz is a group word game for children to teach them about division. Count incrementally, replacing any number divisible by three with the word \" fizz \", and any number divisible by five with the word \" buzz \". " ]
-                    , Block.custom <|
-                        Button.linkButton
-                            [ Button.primary, Button.attrs [ href "/katas/fizzbuzz" ] ]
-                            [ text "fizz me!" ]
-                    , Block.custom <|
-                        Button.linkButton
-                            [ Button.secondary, Button.attrs [ href "https://en.wikipedia.org/wiki/Fizz_buzz" ] ]
-                            [ text "wikipedia" ]
-                    ]
-                |> Card.view
-            ]
-        , Grid.col []
-            [ Card.config [ Card.outlineDanger ]
-                |> Card.headerH4 [] [ text "Modules" ]
-                |> Card.block []
-                    [ Block.text [] [ text "Check out the modules overview" ]
-                    , Block.custom <|
-                        Button.linkButton
-                            [ Button.primary, Button.attrs [ href "#modules" ] ]
-                            [ text "Module" ]
-                    ]
-                |> Card.view
-            ]
+    article [ class "pure-g" ]
+        [ h1 [ class "pure-u-1" ] [ text "Katas" ]
+        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/fizzbuzz" ] [ text "Fizz Buzz" ] ], text "..is a group word game for children to teach them about division.[1] Players take turns to count incrementally, replacing any number divisible by three with the word \"fizz\", and any number divisible by five with the word \"buzz\". " ]
+        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/numerals" ] [ text "Roman Numerals" ] ], text "Roman numerals are a numeral system that originated in ancient Rome and remained the usual way of writing numbers throughout Europe well into the Late Middle Ages. " ]
+        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/primes" ] [ text "Primes" ] ], text "In number theory, integer factorization is the decomposition of a composite number into a product of smaller integers. If these factors are further restricted to prime numbers, the process is called prime factorization. " ]
         ]
-    ]
 
 
-pageHome : Model -> List (Html Msg)
+
+-- , Grid.row []
+--     [ Grid.col []
+--         [ Card.config [ Card.outlinePrimary ]
+--             |> Card.headerH4 [] [ text "Fizzbuzz" ]
+--             |> Card.block []
+--                 [ Block.text [] [ text "Fizz buzz is a group word game for children to teach them about division. Count incrementally, replacing any number divisible by three with the word \" fizz \", and any number divisible by five with the word \" buzz \". " ]
+--                 , Block.custom <|
+--                     Button.linkButton
+--                         [ Button.primary, Button.attrs [ href "/katas/fizzbuzz" ] ]
+--                         [ text "fizz me!" ]
+--                 , Block.custom <|
+--                     Button.linkButton
+--                         [ Button.secondary, Button.attrs [ href "https://en.wikipedia.org/wiki/Fizz_buzz" ] ]
+--                         [ text "wikipedia" ]
+--                 ]
+--             |> Card.view
+--         ]
+--     , Grid.col []
+--         [ Card.config [ Card.outlineDanger ]
+--             |> Card.headerH4 [] [ text "Modules" ]
+--             |> Card.block []
+--                 [ Block.text [] [ text "Check out the modules overview" ]
+--                 , Block.custom <|
+--                     Button.linkButton
+--                         [ Button.primary, Button.attrs [ href "#modules" ] ]
+--                         [ text "Module" ]
+--                 ]
+--             |> Card.view
+--         ]
+--     ]
+
+
+pageHome : Model -> Html Msg
 pageHome model =
-    [ h1 [] [ text "Home" ]
-    , Grid.row []
-        [ Grid.col []
-            [ Card.config [ Card.outlinePrimary ]
-                |> Card.headerH4 [] [ text "Getting started" ]
-                |> Card.block []
-                    [ Block.text [] [ text "Getting started is real easy. Just click the start button." ]
-                    , Block.custom <|
-                        Button.linkButton
-                            [ Button.primary, Button.attrs [ href "#getting-started" ] ]
-                            [ text "Start" ]
-                    ]
-                |> Card.view
-            ]
-        , Grid.col []
-            [ Card.config [ Card.outlineDanger ]
-                |> Card.headerH4 [] [ text "Modules" ]
-                |> Card.block []
-                    [ Block.text [] [ text "Check out the modules overview" ]
-                    , Block.custom <|
-                        Button.linkButton
-                            [ Button.primary, Button.attrs [ href "#modules" ] ]
-                            [ text "Module" ]
-                    ]
-                |> Card.view
-            ]
-        ]
-    ]
+    h1 [] [ text "Home" ]
 
 
-pageGettingStarted : Model -> List (Html Msg)
+
+-- , Grid.row []
+--     [ Grid.col []
+--         [ Card.config [ Card.outlinePrimary ]
+--             |> Card.headerH4 [] [ text "Getting started" ]
+--             |> Card.block []
+--                 [ Block.text [] [ text "Getting started is real easy. Just click the start button." ]
+--                 , Block.custom <|
+--                     Button.linkButton
+--                         [ Button.primary, Button.attrs [ href "#getting-started" ] ]
+--                         [ text "Start" ]
+--                 ]
+--             |> Card.view
+--         ]
+--     , Grid.col []
+--         [ Card.config [ Card.outlineDanger ]
+--             |> Card.headerH4 [] [ text "Modules" ]
+--             |> Card.block []
+--                 [ Block.text [] [ text "Check out the modules overview" ]
+--                 , Block.custom <|
+--                     Button.linkButton
+--                         [ Button.primary, Button.attrs [ href "#modules" ] ]
+--                         [ text "Module" ]
+--                 ]
+--             |> Card.view
+--         ]
+--     ]
+
+
+pageGettingStarted : Model -> Html Msg
 pageGettingStarted model =
-    [ h2 [] [ text "Getting started" ]
-    , Button.button
-        [ Button.success
-        , Button.large
-        , Button.block
-        , Button.attrs [ onClick ShowModal ]
-        ]
-        [ text "Click me" ]
-    ]
+    h2 [] [ text "Getting started" ]
+
+
+
+-- , Button.button
+--     [ Button.success
+--     , Button.large
+--     , Button.block
+--     , Button.attrs [ onClick ShowModal ]
+--     ]
+--     [ text "Click me" ]
 
 
 pageModules : Model -> List (Html Msg)
 pageModules model =
     [ h1 [] [ text "Modules" ]
-    , Listgroup.ul
-        [ Listgroup.li [] [ text "Alert" ]
-        , Listgroup.li [] [ text "Badge" ]
-        , Listgroup.li [] [ text "Card" ]
-        ]
+
+    -- , Listgroup.ul
+    --     [ Listgroup.li [] [ text "Alert" ]
+    --     , Listgroup.li [] [ text "Badge" ]
+    --     , Listgroup.li [] [ text "Card" ]
+    --     ]
     ]
 
 
-pageNotFound_404 : List (Html Msg)
+pageNotFound_404 : Html Msg
 pageNotFound_404 =
-    [ div []
-        [ Alert.simplePrimary []
-            [ h1 [] [ text "Not found" ]
-            , text "Sorry couldn't find that page"
-            ]
-        ]
-    ]
-
-
-modal : Model -> Html Msg
-modal model =
-    Modal.config CloseModal
-        |> Modal.small
-        |> Modal.h4 [] [ text "Getting started ?" ]
-        |> Modal.body []
-            [ Grid.containerFluid []
-                [ Grid.row []
-                    [ Grid.col
-                        [ Col.xs6 ]
-                        [ text "Col 1" ]
-                    , Grid.col
-                        [ Col.xs6 ]
-                        [ text "Col 2" ]
-                    ]
-                ]
-            ]
-        |> Modal.view model.modalVisibility
+    div [] [ text "Sorry couldn't find that page" ]
 
 
 
@@ -467,7 +416,7 @@ subscriptions model =
             Sub.batch [ Time.every 1000 Tick, Sub.map GotTimerMsg (Timer.subscriptions timerModel) ]
 
         _ ->
-            Sub.batch [ Time.every 1000 Tick, Navbar.subscriptions model.navState NavMsg ]
+            Sub.batch [ Time.every 1000 Tick ]
 
 
 

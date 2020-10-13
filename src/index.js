@@ -17,10 +17,10 @@ const app = Elm.Main.init({
 // // Listen for commands from the `setStorage` port.
 // // Turn the data to a string and put it in localStorage.
 // app.ports.setPersist.subscribe((persist) => {
-// console.log("setPersist: ", persist);
-// localStorage.setItem("elm-model", JSON.stringify(persist));
+//   console.log("setPersist: ", persist);
+//   localStorage.setItem("elm-model", JSON.stringify(persist));
 // });
-// playSound
+// // playSound;
 // app.ports.soundPortActual.subscribe((select) => {
 //   if (select === "click") {
 //     sounds.click.play();
