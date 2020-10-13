@@ -350,7 +350,7 @@ viewFrame model =
 
 navBar : Model -> Element Msg
 navBar model =
-    row
+    wrappedRow
         [ width fill
         , BG.color C.darkBase3
         , spaceEvenly

@@ -30,6 +30,8 @@ app.ports.soundPortActual.subscribe((select) => {
     sounds.jingle.play();
   } else if (select === "correct") {
     sounds.correct.play();
+  } else if (select === "wrong") {
+    sounds.wrong.play();
   } else {
     console.log("bad sound selection:", select);
   }
