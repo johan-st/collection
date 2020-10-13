@@ -1,11 +1,20 @@
 port module Main exposing (..)
 
-import Browser
-import Browser.Navigation as Nav
-import Element exposing (..)
-import Element.Background as BG
-import Element.Border as Border
-import Element.Font as Font
+import Bootstrap.Alert as Alert
+import Bootstrap.Button as Button
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid.Row as Col
+import Bootstrap.ListGroup as Listgroup
+import Bootstrap.Modal as Modal
+import Bootstrap.Navbar as Navbar
+import Browser exposing (UrlRequest)
+import Browser.Navigation as Navigation
+import Html exposing (Html, div, h1, h2, text)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
@@ -17,26 +26,34 @@ import Page.Timer as Timer
 import Page.Visuals as Visuals
 import Task
 import Time
-import Url
+import Url exposing (Url)
 import Url.Builder
+import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
 import Utils.Color as C
+import Utils.Utils exposing (timeString)
+
+
+type alias Flags =
+    String
 
 
 
----- MODEL ----
+-- TODO: Build progressbar for salt course, week, day
 
 
 type alias Model =
-    { key : Nav.Key
-    , url : Url.Url
+    { navKey : Navigation.Key
     , page : Page
+    , navState : Navbar.State
+    , modalVisibility : Modal.Visibility
+    , url : Url.Url
     , persistance : PersistV2
     , time : Time.Posix
     , zone : Time.Zone
     }
 
 
-init : String -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         persist =
@@ -45,7 +62,7 @@ init flags url key =
         page =
             case url.path of
                 "/" ->
-                    Page.Landing
+                    Page.Home
 
                 "/fizzbuzz" ->
                     Page.FizzBuzz persist.fizzbuzz
@@ -67,15 +84,30 @@ init flags url key =
 
                 _ ->
                     Page.NotFound_404
+
+        ( navState, navCmd ) =
+            Navbar.initialState NavMsg
+
+        ( model, urlCmd ) =
+            urlUpdate url
+                { navKey = key
+                , page = Home
+                , navState = navState
+                , modalVisibility = Modal.hidden
+                , url = url
+                , persistance = initialPersistance flags
+                , time = Time.millisToPosix 0
+                , zone = Time.utc
+                }
     in
-    ( { key = key
-      , url = url
-      , page = page
-      , persistance = persist
-      , time = Time.millisToPosix 0
-      , zone = Time.utc
-      }
-    , Cmd.batch [ Task.perform AdjustTimeZone Time.here, Task.perform Tick Time.now, log ("flags on init:\n" ++ flags) ]
+    ( model
+    , Cmd.batch
+        [ urlCmd
+        , navCmd
+        , Task.perform AdjustTimeZone Time.here
+        , Task.perform Tick Time.now
+        , log ("flags on init:\n" ++ flags)
+        ]
     )
 
 
@@ -93,13 +125,12 @@ initialPersistance flags =
             data
 
 
-
----- UPDATE ----
-
-
 type Msg
-    = UrlRequested Browser.UrlRequest
-    | UrlChanged Url.Url
+    = ClickedLink UrlRequest
+    | UrlChange Url
+    | NavMsg Navbar.State
+    | CloseModal
+    | ShowModal
     | Tick Time.Posix
     | AdjustTimeZone Time.Zone
     | GotFizzBuzzMsg FizzBuzz.Msg
@@ -114,449 +145,276 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UrlRequested urlRequest ->
-            case urlRequest of
+        ClickedLink req ->
+            case req of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    ( model, Navigation.pushUrl model.navKey <| Url.toString url )
 
                 Browser.External href ->
-                    ( model, Nav.load href )
+                    ( model, Navigation.load href )
 
-        UrlChanged url ->
-            let
-                page =
-                    case url.path of
-                        "/" ->
-                            Page.Landing
+        UrlChange url ->
+            urlUpdate url model
 
-                        "/fizzbuzz" ->
-                            Page.fromModel <| Page.FB model.persistance.fizzbuzz
-
-                        "/numerals" ->
-                            Page.fromModel <| Page.N model.persistance.numerals
-
-                        "/visuals" ->
-                            Page.fromModel <| Page.V ""
-
-                        "/primes" ->
-                            Page.fromModel <| Page.P model.persistance.primeFactors
-
-                        "/search" ->
-                            Page.Search (Search.init model.url)
-
-                        "/timer" ->
-                            Page.fromModel <| Page.T model.persistance.timer
-
-                        _ ->
-                            Page.NotFound_404
-            in
-            ( { model | url = url, page = page }
+        NavMsg state ->
+            ( { model | navState = state }
             , Cmd.none
             )
 
-        GotNumeralMsg numMsg ->
-            case model.page of
-                Page.RomanNumerals numModel ->
-                    toNumeral model (Numeral.update numMsg numModel)
+        CloseModal ->
+            ( { model | modalVisibility = Modal.hidden }
+            , Cmd.none
+            )
 
-                _ ->
-                    ( model, Cmd.none )
-
-        GotFizzBuzzMsg fizzBuzzMsg ->
-            case model.page of
-                Page.FizzBuzz fizzBuzzModel ->
-                    toFizzBuzz model (FizzBuzz.update fizzBuzzMsg fizzBuzzModel)
-
-                _ ->
-                    ( model, Cmd.none )
-
-        GotPrimeMsg primeMsg ->
-            case model.page of
-                Page.PrimeFactorization primeModel ->
-                    toPrime model (Prime.update primeMsg primeModel)
-
-                _ ->
-                    ( model, Cmd.none )
-
-        GotVisualsMsg visMsg ->
-            case model.page of
-                Page.Visuals visModel ->
-                    toVisuals model (Visuals.update visMsg visModel)
-
-                _ ->
-                    ( model, Cmd.none )
-
-        GotSearchMsg searchMsg ->
-            case model.page of
-                Page.Search searchModel ->
-                    case searchMsg of
-                        Search.SearchClicked ->
-                            let
-                                newUrl =
-                                    Url.Builder.relative []
-                                        [ Url.Builder.string "q" (Search.toString searchModel.search) ]
-                            in
-                            toSearch model
-                                (Nav.pushUrl model.key newUrl)
-                                (Search.update searchMsg searchModel)
-
-                        Search.InputChanged _ ->
-                            toSearch model
-                                Cmd.none
-                                (Search.update searchMsg searchModel)
-
-                _ ->
-                    ( model, Cmd.none )
-
-        GotTimerMsg timerMsg ->
-            case model.page of
-                Page.Timer timerModel ->
-                    toTimer model (Timer.update timerMsg timerModel)
-
-                _ ->
-                    ( model, Cmd.none )
+        ShowModal ->
+            ( { model | modalVisibility = Modal.shown }
+            , Cmd.none
+            )
 
         Tick time ->
             ( { model | time = time }, setPersist (E.encode 1 (persistEncoder model.persistance)) )
 
         AdjustTimeZone newZone ->
-            ( { model | zone = newZone }
-            , log "AdjustTimeZone"
-            )
+            ( { model | zone = newZone }, Cmd.none )
 
-        UpdateLocalStorage ->
-            ( model, setPersist (E.encode 1 (persistEncoder model.persistance)) )
+        _ ->
+            Debug.todo "update"
 
 
-updateTime : Time.Posix -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-updateTime time ( model, cmd ) =
-    ( { model | time = time }, cmd )
-
-
-toPrime : Model -> ( Prime.Model, Cmd Prime.Msg ) -> ( Model, Cmd Msg )
-toPrime model ( primeModel, cmd ) =
+urlUpdate : Url -> Model -> ( Model, Cmd Msg )
+urlUpdate url model =
     let
-        newPrime =
-            Page.PrimeFactorization primeModel
+        page =
+            case url.path of
+                "/" ->
+                    Page.Home
 
-        persist =
-            model.persistance
+                "/katas" ->
+                    Page.Katas
 
-        newPersist =
-            { persist | primeFactors = primeModel }
+                "/katas/fizzbuzz" ->
+                    Page.fromModel <| Page.FB model.persistance.fizzbuzz
+
+                "/katas/numerals" ->
+                    Page.fromModel <| Page.N model.persistance.numerals
+
+                "/visuals" ->
+                    Page.fromModel <| Page.V ""
+
+                "/katas/primes" ->
+                    Page.fromModel <| Page.P model.persistance.primeFactors
+
+                "/search" ->
+                    Page.Search (Search.init model.url)
+
+                "/timer" ->
+                    Page.fromModel <| Page.T model.persistance.timer
+
+                _ ->
+                    Page.NotFound_404
     in
-    ( { model | page = newPrime, persistance = newPersist }
-    , Cmd.map GotPrimeMsg cmd
+    ( { model | url = url, page = page }
+    , Cmd.none
     )
-
-
-toVisuals : Model -> ( Visuals.Model, Cmd Visuals.Msg ) -> ( Model, Cmd Msg )
-toVisuals model ( visModel, cmd ) =
-    ( { model | page = Page.Visuals visModel }
-    , Cmd.map GotVisualsMsg cmd
-    )
-
-
-toNumeral : Model -> ( Numeral.Model, Cmd Numeral.Msg ) -> ( Model, Cmd Msg )
-toNumeral model ( numModel, cmd ) =
-    let
-        newNumeral =
-            Page.RomanNumerals numModel
-
-        persist =
-            model.persistance
-
-        newPersist =
-            { persist | numerals = numModel }
-    in
-    ( { model | page = newNumeral, persistance = newPersist }
-    , Cmd.map GotNumeralMsg cmd
-    )
-
-
-toFizzBuzz : Model -> ( FizzBuzz.Model, Cmd FizzBuzz.Msg ) -> ( Model, Cmd Msg )
-toFizzBuzz model ( fizzBuzzModel, cmd ) =
-    let
-        newFizz =
-            Page.FizzBuzz fizzBuzzModel
-
-        persist =
-            model.persistance
-
-        newPersist =
-            { persist | fizzbuzz = fizzBuzzModel }
-    in
-    ( { model | page = newFizz, persistance = newPersist }
-    , Cmd.map GotFizzBuzzMsg cmd
-    )
-
-
-toSearch : Model -> Cmd Msg -> ( Search.Model, Cmd Search.Msg ) -> ( Model, Cmd Msg )
-toSearch model mainCmd ( searchModel, cmd ) =
-    ( { model | page = Page.Search searchModel }
-    , Cmd.batch [ Cmd.map GotSearchMsg cmd, mainCmd ]
-    )
-
-
-toTimer : Model -> ( Timer.Model, Cmd Timer.Msg ) -> ( Model, Cmd Msg )
-toTimer model ( timerModel, cmd ) =
-    let
-        newTimer =
-            Page.Timer timerModel
-
-        persist =
-            model.persistance
-
-        newPersist =
-            { persist | timer = timerModel }
-    in
-    ( { model | page = Page.Timer timerModel, persistance = newPersist }
-    , Cmd.map GotTimerMsg cmd
-    )
-
-
-
----- VIEW ----
 
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "url: " ++ model.url.path
+    { title = "Elm Bootstrap"
     , body =
-        [ Element.layout
-            [ BG.color C.darkBase1
-            , Font.color C.accent1
+        [ div []
+            [ menu model
+            , mainContent model
+            , modal model
             ]
-          <|
-            viewFrame model
         ]
     }
 
 
-viewFrame : Model -> Element Msg
-viewFrame model =
-    column
-        [ width fill
-        , height fill
-        ]
-        [ navBar model
-        , pageViewer model
-        ]
-
-
-
--- NAVIGATION --
-
-
-navBar : Model -> Element Msg
-navBar model =
-    row
-        [ width fill
-        , BG.color C.darkBase3
-        , spaceEvenly
-        , paddingXY 20 10
-        ]
-    <|
-        [ link [ width fill, Font.underline ] { label = text "fizzBuzz", url = "/fizzbuzz" }
-        , link [ width fill, Font.underline ] { label = text "Roman Numerals", url = "/numerals" }
-        , link [ width fill, Font.underline ] { label = text "Prime Factorization", url = "/primes" }
-        , link [ width fill, Font.underline ] { label = text "Visuals", url = "/visuals" }
-        , link [ width fill, Font.underline ] { label = text "Timer", url = "/timer" }
-        , link [ width fill, Font.underline ] { label = text "Search", url = "/search" }
-        , spacer 1
-        , el [ Font.color C.accent3, Font.family [ Font.monospace ] ] <| text (toTime model.zone model.time)
-        ]
-
-
-
--- VIEWS --
-
-
-pageViewer : Model -> Element Msg
-pageViewer model =
-    let
-        pageView =
-            case model.page of
-                Page.Landing ->
-                    landing
-
-                Page.FizzBuzz fizzBuzzModel ->
-                    FizzBuzz.view fizzBuzzModel |> Element.map GotFizzBuzzMsg
-
-                Page.RomanNumerals numeralModel ->
-                    Numeral.view numeralModel |> Element.map GotNumeralMsg
-
-                Page.Diary ->
-                    landing
-
-                Page.NotFound_404 ->
-                    notFound model.url
-
-                Page.Visuals visModel ->
-                    Visuals.view visModel |> Element.map GotVisualsMsg
-
-                Page.PrimeFactorization num ->
-                    Prime.view num |> Element.map GotPrimeMsg
-
-                Page.Search pageModel ->
-                    Search.view pageModel |> Element.map GotSearchMsg
-
-                Page.Timer timerModel ->
-                    Timer.view timerModel |> Element.map GotTimerMsg
-    in
-    row
-        [ width fill
-        , height fill
-        ]
-        [ spacer 1
-        , el
-            [ width (fillPortion 4)
-            , height fill
-            , BG.color C.darkBase2
+menu : Model -> Html Msg
+menu model =
+    Navbar.config NavMsg
+        |> Navbar.withAnimation
+        |> Navbar.container
+        |> Navbar.brand [ href "/" ] [ text "</salty noodles>" ]
+        |> Navbar.items
+            [ Navbar.dropdown
+                { id = "mydropdown"
+                , toggle = Navbar.dropdownToggle [] [ text "Katas" ]
+                , items =
+                    [ Navbar.dropdownItem
+                        [ href "/katas" ]
+                        [ text "overview" ]
+                    , Navbar.dropdownDivider
+                    , Navbar.dropdownItem
+                        [ href "/katas/fizzbuzz" ]
+                        [ text "fizzbuzz" ]
+                    , Navbar.dropdownItem
+                        [ href "/katas/roman_numerals" ]
+                        [ text "roman Numerals" ]
+                    , Navbar.dropdownItem
+                        [ href "/katas/prime_factorization" ]
+                        [ text "prime factorization" ]
+                    ]
+                }
+            , Navbar.itemLink [ href "/404" ] [ text "Get Lost" ]
             ]
-            pageView
-        , spacer 1
-        ]
-
-
-
--- PAGE-VIEW -- landing
-
-
-landing : Element Msg
-landing =
-    row
-        [ width fill
-        , height fill
-        , Border.width 2
-        ]
-        [ column
-            [ width fill
-            , height fill
-            , Font.center
+        |> Navbar.customItems
+            [ Navbar.textItem []
+                [ text (timeString model.zone model.time) ]
             ]
-          <|
-            [ text "Landing Page" ]
-        ]
+        |> Navbar.view model.navState
 
 
+mainContent : Model -> Html Msg
+mainContent model =
+    -- let
+    --     persist =
+    --         model.persistance
+    -- in
+    Grid.container [] <|
+        case model.page of
+            Home ->
+                pageHome model
 
--- PAGE-VIEW -- notFound
---   https://example.com:8042/over/there?name=ferret#nose
---   \___/   \______________/\_________/ \_________/ \__/
---     |            |            |            |        |
---   scheme     authority       path        query   fragment
+            Katas ->
+                pageKatasOverview model
+
+            FizzBuzz _ ->
+                pageGettingStarted model
+
+            NotFound_404 ->
+                pageNotFound_404
+
+            _ ->
+                Debug.todo "mainContent"
 
 
-notFound : Url.Url -> Element Msg
-notFound url =
-    row
-        [ width fill
-        , height fill
-        , Border.width 2
-        , Border.color C.accent4
-        ]
-        [ column
-            [ width fill
-            , height fill
-            , Font.center
+pageKatasOverview : Model -> List (Html Msg)
+pageKatasOverview model =
+    [ h1 [] [ text "Katas" ]
+    , Grid.row []
+        [ Grid.col []
+            [ Card.config [ Card.outlinePrimary ]
+                |> Card.headerH4 [] [ text "Fizzbuzz" ]
+                |> Card.block []
+                    [ Block.text [] [ text "Fizz buzz is a group word game for children to teach them about division. Count incrementally, replacing any number divisible by three with the word \" fizz \", and any number divisible by five with the word \" buzz \". " ]
+                    , Block.custom <|
+                        Button.linkButton
+                            [ Button.primary, Button.attrs [ href "/katas/fizzbuzz" ] ]
+                            [ text "fizz me!" ]
+                    , Block.custom <|
+                        Button.linkButton
+                            [ Button.secondary, Button.attrs [ href "https://en.wikipedia.org/wiki/Fizz_buzz" ] ]
+                            [ text "wikipedia" ]
+                    ]
+                |> Card.view
             ]
-          <|
-            [ text "404 Not Found"
-            , text "This is not the page you are looking for"
-            , text <| "Full Url" ++ Url.toString url
+        , Grid.col []
+            [ Card.config [ Card.outlineDanger ]
+                |> Card.headerH4 [] [ text "Modules" ]
+                |> Card.block []
+                    [ Block.text [] [ text "Check out the modules overview" ]
+                    , Block.custom <|
+                        Button.linkButton
+                            [ Button.primary, Button.attrs [ href "#modules" ] ]
+                            [ text "Module" ]
+                    ]
+                |> Card.view
             ]
         ]
+    ]
 
 
-
--- PAGE-VIEW -- extras
-
-
-spacer : Int -> Element Msg
-spacer portion =
-    el [ width (fillPortion portion), height (fillPortion portion) ] Element.none
-
-
-toTime : Time.Zone -> Time.Posix -> String
-toTime zone posix =
-    let
-        hourInt =
-            Time.toHour zone posix
-
-        hour =
-            if hourInt < 10 then
-                "0" ++ String.fromInt hourInt
-
-            else
-                String.fromInt hourInt
-
-        minInt =
-            Time.toMinute zone posix
-
-        min =
-            if minInt < 10 then
-                "0" ++ String.fromInt minInt
-
-            else
-                String.fromInt minInt
-
-        secInt =
-            Time.toSecond zone posix
-
-        sec =
-            if secInt < 10 then
-                "0" ++ String.fromInt secInt
-
-            else
-                String.fromInt secInt
-    in
-    hour ++ ":" ++ min ++ ":" ++ sec
+pageHome : Model -> List (Html Msg)
+pageHome model =
+    [ h1 [] [ text "Home" ]
+    , Grid.row []
+        [ Grid.col []
+            [ Card.config [ Card.outlinePrimary ]
+                |> Card.headerH4 [] [ text "Getting started" ]
+                |> Card.block []
+                    [ Block.text [] [ text "Getting started is real easy. Just click the start button." ]
+                    , Block.custom <|
+                        Button.linkButton
+                            [ Button.primary, Button.attrs [ href "#getting-started" ] ]
+                            [ text "Start" ]
+                    ]
+                |> Card.view
+            ]
+        , Grid.col []
+            [ Card.config [ Card.outlineDanger ]
+                |> Card.headerH4 [] [ text "Modules" ]
+                |> Card.block []
+                    [ Block.text [] [ text "Check out the modules overview" ]
+                    , Block.custom <|
+                        Button.linkButton
+                            [ Button.primary, Button.attrs [ href "#modules" ] ]
+                            [ text "Module" ]
+                    ]
+                |> Card.view
+            ]
+        ]
+    ]
 
 
-
----- PROGRAM ----
-
-
-main : Program String Model Msg
-main =
-    Browser.application
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        , onUrlRequest = UrlRequested
-        , onUrlChange = UrlChanged
-        }
+pageGettingStarted : Model -> List (Html Msg)
+pageGettingStarted model =
+    [ h2 [] [ text "Getting started" ]
+    , Button.button
+        [ Button.success
+        , Button.large
+        , Button.block
+        , Button.attrs [ onClick ShowModal ]
+        ]
+        [ text "Click me" ]
+    ]
 
 
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    case model.page of
-        Page.Timer timerModel ->
-            Sub.batch [ Time.every 1000 Tick, Sub.map GotTimerMsg (Timer.subscriptions timerModel) ]
-
-        _ ->
-            Time.every 1000 Tick
+pageModules : Model -> List (Html Msg)
+pageModules model =
+    [ h1 [] [ text "Modules" ]
+    , Listgroup.ul
+        [ Listgroup.li [] [ text "Alert" ]
+        , Listgroup.li [] [ text "Badge" ]
+        , Listgroup.li [] [ text "Card" ]
+        ]
+    ]
 
 
+pageNotFound_404 : List (Html Msg)
+pageNotFound_404 =
+    [ div []
+        [ Alert.simplePrimary []
+            [ h1 [] [ text "Not found" ]
+            , text "Sorry couldn't find that page"
+            ]
+        ]
+    ]
 
--- PORTS
 
-
-port log : String -> Cmd msg
-
-
-port setPersist : String -> Cmd msg
+modal : Model -> Html Msg
+modal model =
+    Modal.config CloseModal
+        |> Modal.small
+        |> Modal.h4 [] [ text "Getting started ?" ]
+        |> Modal.body []
+            [ Grid.containerFluid []
+                [ Grid.row []
+                    [ Grid.col
+                        [ Col.xs6 ]
+                        [ text "Col 1" ]
+                    , Grid.col
+                        [ Col.xs6 ]
+                        [ text "Col 2" ]
+                    ]
+                ]
+            ]
+        |> Modal.view model.modalVisibility
 
 
 
 -- ENCODE / DECODE --
--- TODO: consider saving the model and not the entire page
 
 
 persistDecoderHelper : String -> D.Decoder PersistV2
@@ -596,3 +454,43 @@ persistEncoder p =
         , ( "prime", Prime.modelEncoder p.primeFactors )
         , ( "timer", Timer.modelEncoder p.timer )
         ]
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.page of
+        Page.Timer timerModel ->
+            Sub.batch [ Time.every 1000 Tick, Sub.map GotTimerMsg (Timer.subscriptions timerModel) ]
+
+        _ ->
+            Sub.batch [ Time.every 1000 Tick, Navbar.subscriptions model.navState NavMsg ]
+
+
+
+-- PORTS
+
+
+port log : String -> Cmd msg
+
+
+port setPersist : String -> Cmd msg
+
+
+
+---- PROGRAM ----
+
+
+main : Program Flags Model Msg
+main =
+    Browser.application
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        , onUrlRequest = ClickedLink
+        , onUrlChange = UrlChange
+        }

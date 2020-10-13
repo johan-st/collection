@@ -22,7 +22,8 @@ type Model
 
 
 type Page
-    = Landing
+    = Home
+    | Katas
     | FizzBuzz FizzBuzz.Model
     | RomanNumerals Numerals.Model
     | PrimeFactorization Prime.Model
