@@ -89,7 +89,7 @@ update msg model =
             ( playPause model, soundPort Click )
 
         QueTimerClicked i ->
-            ( reccTryShiftForward i model, soundPort Click )
+            ( reccTryShiftForwardEntry i model, soundPort Click )
 
         DoneTimerClicked i ->
             ( reccTryShiftBackwardsEntry i model, soundPort Click )
@@ -655,6 +655,32 @@ tryShiftBackwards ( done, active, que ) =
             ( done, active, que )
 
 
+reccTryShiftForwardEntry : Int -> Model -> Model
+reccTryShiftForwardEntry i m =
+    case m of
+        Paused _ _ que ->
+            let
+                targetLength =
+                    List.length que - (i + 1)
+            in
+            reccTryShiftForward targetLength m
+
+        -- reccTryShiftForward targetLength m
+        Running _ _ que ->
+            let
+                targetLength =
+                    List.length que - (i + 1)
+            in
+            reccTryShiftForward targetLength m
+
+        Edit _ _ que _ ->
+            let
+                targetLength =
+                    List.length que - (i + 1)
+            in
+            reccTryShiftForward targetLength m
+
+
 reccTryShiftForward : Int -> Model -> Model
 reccTryShiftForward i m =
     case m of
@@ -666,8 +692,11 @@ reccTryShiftForward i m =
                 let
                     ( newDone, newActive, newQue ) =
                         tryShiftForward ( done, active, que )
+
+                    targetLength =
+                        i
                 in
-                reccTryShiftForward i (Running newDone newActive newQue)
+                reccTryShiftForward i (Paused newDone newActive newQue)
 
         Paused done active que ->
             if List.length que == i then
@@ -700,24 +729,25 @@ toMinSec t =
 reccTryShiftBackwardsEntry : Int -> Model -> Model
 reccTryShiftBackwardsEntry i m =
     case m of
-        Paused _ _ done ->
+        Paused _ _ _ ->
             let
                 targetLength =
-                    List.length done - (i + 1)
+                    i
             in
             reccTryShiftBackwards targetLength m
 
-        Running _ _ done ->
+        -- reccTryShiftBackwards targetLength m
+        Running _ _ _ ->
             let
                 targetLength =
-                    List.length done - (i + 1)
+                    i
             in
             reccTryShiftBackwards targetLength m
 
-        Edit _ _ done _ ->
+        Edit _ _ _ _ ->
             let
                 targetLength =
-                    List.length done - (i + 1)
+                    i
             in
             reccTryShiftBackwards targetLength m
 
@@ -734,7 +764,7 @@ reccTryShiftBackwards i m =
                     ( newDone, newActive, newQue ) =
                         tryShiftBackwards ( done, active, que )
                 in
-                reccTryShiftBackwards i (Running newDone newActive newQue)
+                reccTryShiftBackwards i (Paused newDone newActive newQue)
 
         Paused done active que ->
             if List.length done == i then
