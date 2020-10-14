@@ -141,8 +141,33 @@ update msg model =
         AdjustTimeZone newZone ->
             ( { model | zone = newZone }, Cmd.none )
 
+        GotFizzBuzzMsg fizzBuzzMsg ->
+            case model.page of
+                Page.FizzBuzz fizzBuzzModel ->
+                    toFizzBuzz model (FizzBuzz.update fizzBuzzMsg fizzBuzzModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
         _ ->
             Debug.todo "update"
+
+
+toFizzBuzz : Model -> ( FizzBuzz.Model, Cmd FizzBuzz.Msg ) -> ( Model, Cmd Msg )
+toFizzBuzz model ( fizzBuzzModel, cmd ) =
+    let
+        newFizz =
+            Page.FizzBuzz fizzBuzzModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | fizzbuzz = fizzBuzzModel }
+    in
+    ( { model | page = newFizz, persistance = newPersist }
+    , Cmd.map GotFizzBuzzMsg cmd
+    )
 
 
 urlUpdate : Url -> Model -> ( Model, Cmd Msg )
@@ -224,6 +249,9 @@ mainContent model =
         Katas ->
             pageKatasOverview model
 
+        Page.FizzBuzz fizzBuzzModel ->
+            FizzBuzz.view fizzBuzzModel |> Html.map GotFizzBuzzMsg
+
         Resources ->
             pageResources model
 
@@ -257,7 +285,7 @@ pageKatasOverview : Model -> Html Msg
 pageKatasOverview model =
     article [ class "pure-g" ]
         [ h1 [ class "pure-u-1" ] [ text "Katas" ]
-        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/fizzbuzz" ] [ text "Fizz Buzz" ] ], text "..is a group word game for children to teach them about division.[1] Players take turns to count incrementally, replacing any number divisible by three with the word \"fizz\", and any number divisible by five with the word \"buzz\". " ]
+        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/fizzbuzz" ] [ text "Fizz Buzz" ] ], text "..is a group word game for children to teach them about division. Players take turns to count incrementally, replacing any number divisible by three with the word \"fizz\", and any number divisible by five with the word \"buzz\". " ]
         , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/numerals" ] [ text "Roman Numerals" ] ], text "Roman numerals are a numeral system that originated in ancient Rome and remained the usual way of writing numbers throughout Europe well into the Late Middle Ages. " ]
         , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/primes" ] [ text "Primes" ] ], text "In number theory, integer factorization is the decomposition of a composite number into a product of smaller integers. If these factors are further restricted to prime numbers, the process is called prime factorization. " ]
         ]

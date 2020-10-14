@@ -1,10 +1,8 @@
 module Page.FizzBuzz exposing (..)
 
-import Element exposing (..)
-import Element.Background as BG
-import Element.Border as Border
-import Element.Font as Font
-import Element.Input as Input
+import Html exposing (..)
+import Html.Attributes as Attr exposing (..)
+import Html.Events exposing (onInput)
 import Json.Decode as D
 import Json.Encode as E
 import Utils.Color as C
@@ -18,71 +16,59 @@ type Soda
 
 
 type alias Model =
-    { slider : Float
+    { input : Int
     }
 
 
 type Msg
-    = SliderMoved Float
+    = InputChanged String
 
 
 init : Model
 init =
-    { slider = 16
+    { input = 16
     }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SliderMoved newPos ->
-            ( { model | slider = newPos }, Cmd.none )
+        InputChanged input ->
+            let maybeInt = String.fromInt input 
+            
+            in
+            case maybeInt of 
+                Just int ->
+                    ( { model | input = int }, Cmd.none )
+                Nothing -> 
+                    (model , Cmd.none )
 
 
-view : Model -> Element Msg
+
+view : Model -> Html Msg
 view model =
-    column [ width fill ]
-        [ el
-            [ centerX
-            , padding 30
-            , Font.size 60
-            , Font.color C.accent3
-            ]
-          <|
-            text "welcome to fizzbuzz"
-        , Input.slider
-            [ BG.color C.darkBase3
-            , width fill
-            , paddingXY 100 0
-            , Border.width 1
-            , Border.rounded 50
-            ]
-            { onChange = SliderMoved
-            , label = Input.labelLeft [ paddingXY 5 15 ] <| text "How fizzy you ask?"
-            , min = 0
-            , max = model.slider + 100
-            , value = model.slider
-            , thumb = Input.defaultThumb
-            , step = Just 1
-            }
-        , wrappedRow [ spacing 5 ] <| List.map sodaToEl <| List.map carbonate (List.range 1 (ceiling model.slider))
+    section []
+        [ h1 [] [ text "fizzbuzzzer" ]
+        , input [type_ "number" , value (String.fromInt model.input), onInput InputChanged ] []
+        , span [] <| List.map sodaToEl <| List.map carbonate (List.range 1 ( model.input))
         ]
 
 
-sodaToEl : Soda -> Element Msg
+
+sodaToEl : Soda -> Html Msg
 sodaToEl soda =
     case soda of
         Uncarbonated int ->
-            el [ Font.color C.subtle ] <| text <| String.fromInt int
+            span [] [ text (String.fromInt int) ]
 
         Fizzy ->
-            el [ Font.color C.accent2 ] <| text <| "Fizz"
+            span [] [ text "Fizz" ]
 
         Buzzy ->
-            el [ Font.color C.accent4 ] <| text <| "Buzz"
+            span [] [ text "Buzz" ]
 
         FizzyBuzzy ->
-            el [ Font.color C.accent3 ] <| text <| "FizzBuzz"
+            span [] [ text "FizzBuzz" ]
 
 
 carbonate : Int -> Soda
@@ -110,11 +96,11 @@ carbonate int =
 modelEncoder : Model -> E.Value
 modelEncoder model =
     E.object
-        [ ( "slider", E.float model.slider )
+        [ ( "slider", E.int model.input )
         ]
 
 
 modelDecoder : D.Decoder Model
 modelDecoder =
     D.map Model
-        (D.field "slider" D.float)
+        (D.field "slider" D.int)
