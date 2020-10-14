@@ -263,98 +263,10 @@ pageKatasOverview model =
         ]
 
 
-
--- , Grid.row []
---     [ Grid.col []
---         [ Card.config [ Card.outlinePrimary ]
---             |> Card.headerH4 [] [ text "Fizzbuzz" ]
---             |> Card.block []
---                 [ Block.text [] [ text "Fizz buzz is a group word game for children to teach them about division. Count incrementally, replacing any number divisible by three with the word \" fizz \", and any number divisible by five with the word \" buzz \". " ]
---                 , Block.custom <|
---                     Button.linkButton
---                         [ Button.primary, Button.attrs [ href "/katas/fizzbuzz" ] ]
---                         [ text "fizz me!" ]
---                 , Block.custom <|
---                     Button.linkButton
---                         [ Button.secondary, Button.attrs [ href "https://en.wikipedia.org/wiki/Fizz_buzz" ] ]
---                         [ text "wikipedia" ]
---                 ]
---             |> Card.view
---         ]
---     , Grid.col []
---         [ Card.config [ Card.outlineDanger ]
---             |> Card.headerH4 [] [ text "Modules" ]
---             |> Card.block []
---                 [ Block.text [] [ text "Check out the modules overview" ]
---                 , Block.custom <|
---                     Button.linkButton
---                         [ Button.primary, Button.attrs [ href "#modules" ] ]
---                         [ text "Module" ]
---                 ]
---             |> Card.view
---         ]
---     ]
-
-
 pageHome : Model -> Html Msg
 pageHome model =
-    h1 [] [ text "Home" ]
-
-
-
--- , Grid.row []
---     [ Grid.col []
---         [ Card.config [ Card.outlinePrimary ]
---             |> Card.headerH4 [] [ text "Getting started" ]
---             |> Card.block []
---                 [ Block.text [] [ text "Getting started is real easy. Just click the start button." ]
---                 , Block.custom <|
---                     Button.linkButton
---                         [ Button.primary, Button.attrs [ href "#getting-started" ] ]
---                         [ text "Start" ]
---                 ]
---             |> Card.view
---         ]
---     , Grid.col []
---         [ Card.config [ Card.outlineDanger ]
---             |> Card.headerH4 [] [ text "Modules" ]
---             |> Card.block []
---                 [ Block.text [] [ text "Check out the modules overview" ]
---                 , Block.custom <|
---                     Button.linkButton
---                         [ Button.primary, Button.attrs [ href "#modules" ] ]
---                         [ text "Module" ]
---                 ]
---             |> Card.view
---         ]
---     ]
-
-
-pageGettingStarted : Model -> Html Msg
-pageGettingStarted model =
-    h2 [] [ text "Getting started" ]
-
-
-
--- , Button.button
---     [ Button.success
---     , Button.large
---     , Button.block
---     , Button.attrs [ onClick ShowModal ]
---     ]
---     [ text "Click me" ]
-
-
-pageModules : Model -> List (Html Msg)
-pageModules model =
-    [ h1 [] [ text "Modules" ]
-
-    -- , Listgroup.ul
-    --     [ Listgroup.li [] [ text "Alert" ]
-    --     , Listgroup.li [] [ text "Badge" ]
-    --     , Listgroup.li [] [ text "Card" ]
-    --     ]
-    ]
+    article [ class "pure-g" ]
+        [ h1 [ class "pure-u-1" ] [ text "Welcome noodle!" ] ]
 
 
 pageNotFound_404 : Html Msg
