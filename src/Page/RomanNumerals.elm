@@ -1,8 +1,6 @@
 module Page.RomanNumerals exposing (..)
 
-import Element exposing (..)
-import Element.Font as Font
-import Element.Input as Input
+import Html exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 import Utils.Color as C
@@ -18,36 +16,36 @@ type alias Model =
     }
 
 
-view : Model -> Element Msg
+view : Model -> Html Msg
 view { input, nums } =
-    column
-        [ centerX
-        , centerY
-        ]
-        [ Input.text
-            [ width (px 300)
-            , centerX
-            ]
-            { onChange = InputChanged
-            , text = input
-            , placeholder = Nothing
-            , label =
-                Input.labelAbove []
-                    (text "enter a number (1-3999)")
-            }
-        , column
-            [ centerX
-            , padding 30
-            ]
-            [ el
-                [ Font.size 60
-                , Font.family [ Font.serif ]
-                , Font.color C.accent4
-                ]
-              <|
-                text (numsToString nums)
-            ]
-        ]
+    -- column
+    --     [ centerX
+    --     , centerY
+    --     ]
+    --     [ Input.text
+    --         [ width (px 300)
+    --         , centerX
+    --         ]
+    --         { onChange = InputChanged
+    --         , text = input
+    --         , placeholder = Nothing
+    --         , label =
+    --             Input.labelAbove []
+    --                 (text "enter a number (1-3999)")
+    --         }
+    --     , column
+    --         [ centerX
+    --         , padding 30
+    --         ]
+    --         [ el
+    --             [ Font.size 60
+    --             , Font.family [ Font.serif ]
+    --             , Font.color C.accent4
+    --             ]
+    --           <|
+    --             text (numsToString nums)
+    --         ]
+    --     ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

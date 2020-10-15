@@ -249,8 +249,11 @@ mainContent model =
         Katas ->
             pageKatasOverview model
 
-        Page.FizzBuzz fizzBuzzModel ->
-            FizzBuzz.view fizzBuzzModel |> Html.map GotFizzBuzzMsg
+        FizzBuzz fizzBuzzModel ->
+            FizzBuzz.view model.persistance.fizzbuzz |> Html.map GotFizzBuzzMsg
+
+        RomanNumerals numeralModel ->
+            Numeral.view model.persistance.numerals |> Html.map GotNumeralMsg
 
         Resources ->
             pageResources model
@@ -273,7 +276,7 @@ pageResources model =
         , section [ class "pure-menu custom-restricted-width  pure-u-1 pure-u-sm-1-3" ]
             [ span [ class "pure-menu-heading" ] [ text "javascript" ]
             , ul [ class "pure-menu-list" ]
-                [ li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://package.elm-lang.org/" ] [ text "something" ] ]
+                [ li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://developer.mozilla.org/en-US/docs/Web/JavaScript" ] [ text "Mozilla Developer Network" ] ]
                 , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://mbylstra.github.io/html-to-elm/" ] [ text "some other thing" ] ]
                 , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://guide.elm-lang.org/" ] [ text "bla bla" ] ]
                 ]

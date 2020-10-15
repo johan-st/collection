@@ -34,41 +34,47 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         InputChanged input ->
-            let maybeInt = String.fromInt input 
-            
+            let
+                maybeInt =
+                    String.toInt input
             in
-            case maybeInt of 
+            case maybeInt of
                 Just int ->
-                    ( { model | input = int }, Cmd.none )
-                Nothing -> 
-                    (model , Cmd.none )
+                    if int > 999 then
+                        ( model, Cmd.none )
 
+                    else
+                        ( { model | input = int }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
     section []
-        [ h1 [] [ text "fizzbuzzzer" ]
-        , input [type_ "number" , value (String.fromInt model.input), onInput InputChanged ] []
-        , span [] <| List.map sodaToEl <| List.map carbonate (List.range 1 ( model.input))
+        [ div []
+            [ h1 [] [ text "fizzbuzzzer" ]
+            , input [ type_ "number", value (String.fromInt model.input), onInput InputChanged ] []
+            ]
+        , span [] <| List.map sodaToEl <| List.map carbonate (List.range 1 model.input)
         ]
-
 
 
 sodaToEl : Soda -> Html Msg
 sodaToEl soda =
     case soda of
         Uncarbonated int ->
-            span [] [ text (String.fromInt int) ]
+            span [] [ text <| " " ++ String.fromInt int ]
 
         Fizzy ->
-            span [] [ text "Fizz" ]
+            span [] [ text " Fizz" ]
 
         Buzzy ->
-            span [] [ text "Buzz" ]
+            span [] [ text " Buzz" ]
 
         FizzyBuzzy ->
-            span [] [ text "FizzBuzz" ]
+            span [] [ text " FizzBuzz" ]
 
 
 carbonate : Int -> Soda
