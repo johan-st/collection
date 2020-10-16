@@ -52,12 +52,12 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    section []
+    section [ class "kata" ]
         [ div []
-            [ h1 [] [ text "fizzbuzzzer" ]
+            [ h1 [ class "kata__heading" ] [ text "fizzbuzzzer" ]
             , input [ type_ "number", value (String.fromInt model.input), onInput InputChanged ] []
             ]
-        , span [] <| List.map sodaToEl <| List.map carbonate (List.range 1 model.input)
+        , span [ class "kata__result kata__fizzbuzz_result" ] <| List.map sodaToEl <| List.map carbonate (List.range 1 model.input)
         ]
 
 
@@ -65,16 +65,16 @@ sodaToEl : Soda -> Html Msg
 sodaToEl soda =
     case soda of
         Uncarbonated int ->
-            span [] [ text <| " " ++ String.fromInt int ]
+            span [ class "kata__fizzbuzz-number--num" ] [ text <| " " ++ String.fromInt int ]
 
         Fizzy ->
-            span [] [ text " Fizz" ]
+            span [ class "kata__fizzbuzz-number--fizz" ] [ text " Fizz" ]
 
         Buzzy ->
-            span [] [ text " Buzz" ]
+            span [ class "kata__fizzbuzz-number--buzz" ] [ text " Buzz" ]
 
         FizzyBuzzy ->
-            span [] [ text " FizzBuzz" ]
+            span [ class "kata__fizzbuzz-number--fizzbuzz" ] [ text " FizzBuzz" ]
 
 
 carbonate : Int -> Soda

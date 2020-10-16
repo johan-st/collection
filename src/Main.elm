@@ -1,6 +1,6 @@
 port module Main exposing (..)
 
-import Browser exposing (UrlRequest)
+import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Navigation
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_)
@@ -10,6 +10,7 @@ import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
 import Page.Page as Page exposing (Page(..))
 import Page.PrimeFactorization as Prime
+import Page.Resources as Resources
 import Page.RomanNumerals as Numeral exposing (Numeral(..))
 import Page.Search as Search
 import Page.Timer as Timer exposing (..)
@@ -17,7 +18,7 @@ import Page.Visuals as Visuals
 import Task
 import Time
 import Url exposing (Url)
-import Url.Builder
+import Url.Builder exposing (relative)
 import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
 import Utils.Color as C
 import Utils.Utils exposing (timeString)
@@ -28,7 +29,7 @@ type alias Flags =
 
 
 
--- TODO: Build progressbar for salt course, week, day
+-- TODO: ! Build progressbar for salt course, week, day
 
 
 type alias Model =
@@ -110,6 +111,7 @@ initialPersistance flags =
 type Msg
     = ClickedLink UrlRequest
     | UrlChange Url
+    | Redirect String
     | Tick Time.Posix
     | AdjustTimeZone Time.Zone
     | GotFizzBuzzMsg FizzBuzz.Msg
@@ -118,6 +120,7 @@ type Msg
     | GotVisualsMsg Visuals.Msg
     | GotSearchMsg Search.Msg
     | GotTimerMsg Timer.Msg
+    | GotResourceMsg Resources.Msg
     | UpdateLocalStorage
 
 
@@ -135,6 +138,9 @@ update msg model =
         UrlChange url ->
             urlUpdate url model
 
+        Redirect url ->
+            ( model, Navigation.pushUrl model.navKey url )
+
         Tick time ->
             ( { model | time = time }, setPersist (E.encode 1 (persistEncoder model.persistance)) )
 
@@ -149,25 +155,46 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        _ ->
-            Debug.todo "update"
+        GotNumeralMsg fizzBuzzMsg ->
+            case model.page of
+                RomanNumerals fizzBuzzModel ->
+                    toNumeral model (Numeral.update fizzBuzzMsg fizzBuzzModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotPrimeMsg primeMsg ->
+            case model.page of
+                PrimeFactorization primeModel ->
+                    toPrime model (Prime.update primeMsg primeModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotTimerMsg timerMsg ->
+            case model.page of
+                Page.Timer timerModel ->
+                    toTimer model (Timer.update timerMsg timerModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotVisualsMsg _ ->
+            ( model, Cmd.none )
+
+        GotSearchMsg _ ->
+            ( model, Cmd.none )
+
+        GotResourceMsg _ ->
+            ( model, Cmd.none )
+
+        UpdateLocalStorage ->
+            ( model, Cmd.none )
 
 
-toFizzBuzz : Model -> ( FizzBuzz.Model, Cmd FizzBuzz.Msg ) -> ( Model, Cmd Msg )
-toFizzBuzz model ( fizzBuzzModel, cmd ) =
-    let
-        newFizz =
-            Page.FizzBuzz fizzBuzzModel
 
-        persist =
-            model.persistance
-
-        newPersist =
-            { persist | fizzbuzz = fizzBuzzModel }
-    in
-    ( { model | page = newFizz, persistance = newPersist }
-    , Cmd.map GotFizzBuzzMsg cmd
-    )
+-- _ ->
+--     Debug.todo "main update function"
 
 
 urlUpdate : Url -> Model -> ( Model, Cmd Msg )
@@ -212,97 +239,91 @@ urlUpdate url model =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "Elm w/ pure-css"
+    { title = timeString model.zone model.time ++ " - </salty noodles>"
     , body =
-        [ div []
-            [ menu model
-            , mainContent model
-            ]
+        [ menu model
+        , mainContent model
+        , footer model
         ]
     }
 
 
 menu : Model -> Html Msg
 menu model =
-    div [ class "pure-menu pure-menu-horizontal" ]
-        [ a [ href "/", class "pure-menu-heading pure-menu-link" ] [ text "</salty noodles>" ]
-        , ul [ class "pure-menu-list" ]
-            [ li [ class "pure-menu-item" ] [ a [ href "/katas", class "pure-menu-link" ] [ text "katas" ] ]
-            , li [ class "pure-menu-item" ] [ a [ href "/timer", class "pure-menu-link" ] [ text "timer" ] ]
-            , li [ class "pure-menu-item" ] [ a [ href "/resources", class "pure-menu-link" ] [ text "links" ] ]
-            , li [ class "pure-menu-item" ] [ a [ href "/404", class "pure-menu-link" ] [ text "lost" ] ]
+    nav [ class "main-nav" ]
+        [ a [ href "/", class "main-nav__brand  main-nav__link" ] [ text "</salty noodles>" ]
+        , ul [ class "main-nav__list " ]
+            [ li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/katas" ] [ text "katas" ] ]
+            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
+            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
             ]
-        , div [ class "pure-menu-item" ] [ text (timeString model.zone model.time) ]
+
+        -- , li [ class "main-nav__list-item" ] [ a [ href "/timer" ] [ text "timer" ] ]
+        , div [ class "main-nav__clock" ] [ text (timeString model.zone model.time) ]
         ]
 
 
 mainContent : Model -> Html Msg
 mainContent model =
-    -- let
-    --     persist =
-    --         model.persistance
-    -- in
     case model.page of
         Home ->
-            pageHome model
+            section [ class "main" ] [ pageHome model ]
 
         Katas ->
-            pageKatasOverview model
+            section [ class "main" ] [ pageKatasOverview model ]
 
         FizzBuzz fizzBuzzModel ->
-            FizzBuzz.view model.persistance.fizzbuzz |> Html.map GotFizzBuzzMsg
+            section [ class "main" ] [ FizzBuzz.view model.persistance.fizzbuzz |> Html.map GotFizzBuzzMsg ]
 
         RomanNumerals numeralModel ->
-            Numeral.view model.persistance.numerals |> Html.map GotNumeralMsg
+            section [ class "main" ] [ Numeral.view model.persistance.numerals |> Html.map GotNumeralMsg ]
+
+        PrimeFactorization primeModel ->
+            Prime.view model.persistance.primeFactors |> Html.map GotPrimeMsg
+
+        Page.Timer timerModel ->
+            section [ class "main" ] [ Timer.view model.persistance.timer |> Html.map GotTimerMsg ]
 
         Resources ->
-            pageResources model
+            section [ class "main" ] [ Resources.view |> Html.map GotResourceMsg ]
 
         _ ->
-            pageNotFound_404
-
-
-pageResources : Model -> Html Msg
-pageResources model =
-    article [ class "pure-g" ]
-        [ section [ class "pure-menu custom-restricted-width pure-u-1 pure-u-sm-1-3" ]
-            [ span [ class "pure-menu-heading" ] [ text "elm" ]
-            , ul [ class "pure-menu-list" ]
-                [ li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://package.elm-lang.org/" ] [ text "packages" ] ]
-                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://mbylstra.github.io/html-to-elm/" ] [ text "HTML to Elm" ] ]
-                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://guide.elm-lang.org/" ] [ text "official guide" ] ]
-                ]
-            ]
-        , section [ class "pure-menu custom-restricted-width  pure-u-1 pure-u-sm-1-3" ]
-            [ span [ class "pure-menu-heading" ] [ text "javascript" ]
-            , ul [ class "pure-menu-list" ]
-                [ li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://developer.mozilla.org/en-US/docs/Web/JavaScript" ] [ text "Mozilla Developer Network" ] ]
-                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://mbylstra.github.io/html-to-elm/" ] [ text "some other thing" ] ]
-                , li [ class "pure-menu-item" ] [ a [ class "pure-menu-link", href "https://guide.elm-lang.org/" ] [ text "bla bla" ] ]
-                ]
-            ]
-        ]
+            section [ class "main" ] [ pageNotFound_404 ]
 
 
 pageKatasOverview : Model -> Html Msg
 pageKatasOverview model =
-    article [ class "pure-g" ]
-        [ h1 [ class "pure-u-1" ] [ text "Katas" ]
-        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/fizzbuzz" ] [ text "Fizz Buzz" ] ], text "..is a group word game for children to teach them about division. Players take turns to count incrementally, replacing any number divisible by three with the word \"fizz\", and any number divisible by five with the word \"buzz\". " ]
-        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/numerals" ] [ text "Roman Numerals" ] ], text "Roman numerals are a numeral system that originated in ancient Rome and remained the usual way of writing numbers throughout Europe well into the Late Middle Ages. " ]
-        , section [ class "pure-u-sm-1-3 pure-u-1" ] [ h4 [] [ a [ href "/katas/primes" ] [ text "Primes" ] ], text "In number theory, integer factorization is the decomposition of a composite number into a product of smaller integers. If these factors are further restricted to prime numbers, the process is called prime factorization. " ]
+    article [ class "kata-links" ]
+        [ h1 [ class "kata-links__heading" ] [ text "Katas" ]
+        , section [ class "kata-links__card", onClick (Redirect "/katas/fizzbuzz") ]
+            [ h4 [] [ a [ class "kata-links__link", href "/katas/fizzbuzz" ] [ text "Fizz Buzz" ] ]
+            , p [ class "kata-links__description" ] [ text "..is a group word game for children to teach them about division. Players take turns to count incrementally, replacing any number divisible by three with the word \"fizz\", and any number divisible by five with the word \"buzz\". " ]
+            ]
+        , section [ class "kata-links__card", onClick (Redirect "/katas/numerals") ]
+            [ h4 [] [ a [ class "kata-links__link", href "/katas/numerals" ] [ text "Roman Numerals" ] ]
+            , p [ class "kata-links__description" ] [ text "Roman numerals are a numeral system that originated in ancient Rome and remained the usual way of writing numbers throughout Europe well into the Late Middle Ages. " ]
+            ]
+        , section [ class "kata-links__card", onClick (Redirect "/katas/primes") ]
+            [ h4 [] [ a [ class "kata-links__link", href "/katas/primes" ] [ text "Primes" ] ]
+            , p [ class "kata-links__description" ] [ text "In number theory, integer factorization is the decomposition of a composite number into a product of smaller integers. If these factors are further restricted to prime numbers, the process is called prime factorization. " ]
+            ]
         ]
 
 
 pageHome : Model -> Html Msg
 pageHome model =
-    article [ class "pure-g" ]
-        [ h1 [ class "pure-u-1" ] [ text "Welcome noodle!" ] ]
+    article [ class "home" ]
+        [ h1 [ class "home__heading" ] [ text "Welcome noodle!" ] ]
+
+
+footer : model -> Html Msg
+footer model =
+    div [ class "footer" ] [ text "GO RHINOS!!" ]
 
 
 pageNotFound_404 : Html Msg
 pageNotFound_404 =
-    div [] [ text "Sorry couldn't find that page" ]
+    div [ class "404__heading" ] [ text "Sorry couldn't find that page" ]
 
 
 
@@ -360,6 +381,78 @@ subscriptions model =
 
         _ ->
             Sub.batch [ Time.every 1000 Tick ]
+
+
+
+-- MODEL MAPPING
+
+
+toPrime : Model -> ( Prime.Model, Cmd Prime.Msg ) -> ( Model, Cmd Msg )
+toPrime model ( primeModel, cmd ) =
+    let
+        newPrime =
+            Page.PrimeFactorization primeModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | primeFactors = primeModel }
+    in
+    ( { model | page = newPrime, persistance = newPersist }
+    , Cmd.map GotPrimeMsg cmd
+    )
+
+
+toNumeral : Model -> ( Numeral.Model, Cmd Numeral.Msg ) -> ( Model, Cmd Msg )
+toNumeral model ( numModel, cmd ) =
+    let
+        newNumeral =
+            Page.RomanNumerals numModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | numerals = numModel }
+    in
+    ( { model | page = newNumeral, persistance = newPersist }
+    , Cmd.map GotNumeralMsg cmd
+    )
+
+
+toFizzBuzz : Model -> ( FizzBuzz.Model, Cmd FizzBuzz.Msg ) -> ( Model, Cmd Msg )
+toFizzBuzz model ( fizzBuzzModel, cmd ) =
+    let
+        newFizz =
+            Page.FizzBuzz fizzBuzzModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | fizzbuzz = fizzBuzzModel }
+    in
+    ( { model | page = newFizz, persistance = newPersist }
+    , Cmd.map GotFizzBuzzMsg cmd
+    )
+
+
+toTimer : Model -> ( Timer.Model, Cmd Timer.Msg ) -> ( Model, Cmd Msg )
+toTimer model ( timerModel, cmd ) =
+    let
+        newTimer =
+            Page.Timer timerModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | timer = timerModel }
+    in
+    ( { model | page = Page.Timer timerModel, persistance = newPersist }
+    , Cmd.map GotTimerMsg cmd
+    )
 
 
 

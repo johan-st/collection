@@ -40,16 +40,17 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    section []
+    section [ class "kata" ]
         [ div []
-            [ h1 [] [ text "Roman Numerals" ]
+            [ h1 [ class "kata__heading" ] [ text "Prime Factorization" ]
             , input [ type_ "number", value model.input, onInput InputChanged ] []
             ]
-        , span [] <|
+        , span [ class "kata__result" ] <|
             List.map
                 (\int ->
                     text <|
-                        String.fromInt int
+                        " "
+                            ++ String.fromInt int
                 )
                 (primeFactors (Maybe.withDefault 0 (String.toInt model.input)))
         ]
