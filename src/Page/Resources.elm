@@ -12,12 +12,23 @@ type Msg
 view : Html Msg
 view =
     article [ class "resources" ]
-        --  JAVASCRIPT
-        [ section [ class "resources__section" ]
+        [ section []
+            -- </SALT>
+            [ span [ class "resources__list-heading" ] [ text "</salt> originals" ]
+            , ul [ class "resources__list" ]
+                [ li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "https://appliedtechnology.github.io/protips/" ] [ text "Pro Tips" ] ]
+
+                -- , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
+                -- , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
+                -- , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
+                ]
+            ]
+        , section [ class "resources__section" ]
+            --  JAVASCRIPT
             [ span [ class "resources__list-heading" ] [ text "javascript" ]
             , ul [ class "resources__list" ]
                 [ li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "https://developer.mozilla.org/en-US/docs/Web/JavaScript" ] [ text "Mozilla Developer Network" ] ]
-                , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "https://mbylstra.github.io/html-to-elm/" ] [ text "some other thing" ] ]
+                , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "https://expressjs.com/" ] [ text "express.js" ] ]
                 , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "https://guide.elm-lang.org/" ] [ text "bla bla" ] ]
                 ]
             ]
@@ -98,5 +109,5 @@ view =
         --           [ li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
         --           , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
         --           ]
-        --       ]
+        --       ]https://appliedtechnology.github.io/protips/
         ]
