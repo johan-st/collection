@@ -12,7 +12,7 @@ type Msg
 view : Html Msg
 view =
     article [ class "resources" ]
-        [ section []
+        [ section [ class "resources__section" ]
             -- </SALT>
             [ span [ class "resources__list-heading" ] [ text "</salt> originals" ]
             , ul [ class "resources__list" ]
@@ -103,7 +103,7 @@ view =
             ]
 
         -- TEMPLATE SECTION
-        --   , section []
+        --   ,  section [ class "resources__section" ]
         --       [ span [ class "resources__list-heading" ] [ text "HEADING" ]
         --       , ul [ class "resources__list" ]
         --           [ li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
