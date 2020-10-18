@@ -1,12 +1,17 @@
 port module Page.Timer exposing (..)
 
-import Html exposing (..)
-import Html.Attributes exposing (class)
-import Html.Events exposing (onClick, onDoubleClick)
+import Element exposing (..)
+import Element.Background as BG
+import Element.Border as Border
+import Element.Events exposing (onClick, onDoubleClick)
+import Element.Font as Font
+import Element.Input as Input
+import Html exposing (input)
 import Json.Decode as D
 import Json.Encode as E
 import Page.PrimeFactorization exposing (Model)
 import Time exposing (Posix)
+import Utils.Color as C
 
 
 type alias Timer =
@@ -247,10 +252,9 @@ editToggle model =
             Paused done active que
 
 
-view : Model -> Html Msg
+view : Model -> Element Msg
 view model =
     case model of
-
         Paused done active que ->
             timersView C.accent3 done active que
 
@@ -259,7 +263,6 @@ view model =
 
         Edit done active que ( min, sec ) ->
             editorView done active que ( min, sec )
-
 
 
 editorView : List Timer -> Timer -> List Timer -> ( Int, Int ) -> Element Msg
@@ -371,27 +374,22 @@ timersView color done active que =
             [ doneView done, activeTimer color active, queView que ]
         , row [ padding 15, spacing 10, centerX ]
             [ resetButton, editButton ]
-
         ]
 
 
-resetButton : Html Msg
+resetButton : Element Msg
 resetButton =
-    div [] [ text "reset all" ]
-
-
-
---     el
---         [ Border.rounded 10
---         , Border.width 1
---         , padding 20
---         , centerX
---         , onClick ResetAll
---         , pointer
---         , mouseOver
---             [ Border.glow C.accent3 5 ]
---         ]
-
+    el
+        [ Border.rounded 10
+        , Border.width 1
+        , padding 20
+        , centerX
+        , onClick ResetAll
+        , pointer
+        , mouseOver
+            [ Border.glow C.accent3 5 ]
+        ]
+        (text "reset all")
 
 
 deleteButton : Element Msg
@@ -469,7 +467,7 @@ activeTimer color t =
                     timeToString <|
                         timeLeft t
             ]
-        ]
+        )
 
 
 timeLeft : Timer -> Int
@@ -485,10 +483,16 @@ timeLeft t =
         diff
 
 
-editQueView : List Timer -> Html Msg
+editQueView : List Timer -> Element Msg
 editQueView que =
-    div [] [ text "EDIT QUE VIEW" ]
-
+    row
+        [ Font.color C.accent1
+        , width <| fillPortion 1
+        , spacing 5
+        ]
+    <|
+        List.indexedMap (queListItem C.accent1) <|
+            List.reverse que
 
 
 editDoneView : List Timer -> Element Msg
@@ -501,24 +505,17 @@ editDoneView done =
     <|
         List.indexedMap (doneListItem C.accent1) done
 
--- row
---     [ Font.color C.accent1
---     , width <| fillPortion 1
---     , spacing 5
---     ]
--- <|
---     List.indexedMap (doneListItem C.accent1) que
 
-
-queView : List Timer -> Html Msg
+queView : List Timer -> Element Msg
 queView que =
-    div [ class "timer__que" ]
-        [ text "que"
-        , div [] <|
-            List.indexedMap queListItem <|
-                List.reverse que
+    row
+        [ Font.color C.accent4
+        , width <| fillPortion 1
+        , spacing 5
         ]
-
+    <|
+        List.indexedMap (queListItem C.accent4) <|
+            List.reverse que
 
 
 doneView : List Timer -> Element Msg
@@ -595,75 +592,6 @@ doneListItem c i t =
 
 
 
-queListItem : Int -> Timer -> Html Msg
-queListItem i t =
-    div [] [ text "QUE ITEM VIEW" ]
-
-
-
--- el
---     [ Font.color c
---     , Font.size 20
---     , width <| fillPortion 3
---     , Border.innerGlow c 3
---     , width (px 75)
---     , height (px 75)
---     , Border.rounded 10
---     , BG.color C.darkBase1
---     , pointer
---     , onClick <| QueTimerClicked i
---     ]
---     (column
---         [ mouseOver [ Border.glow c 3 ]
---         , width (px 70)
---         , height (px 70)
---         , Border.rounded 10
---         , centerX
---         , centerY
---         ]
---         [ el [ centerX, centerY ] <| text <| t.name
---         , el [ centerX, centerY ] <|
---             text <|
---                 timeToString <|
---                     timeLeft t
---         ]
---     )
-
-
-doneListItem : Int -> Timer -> Html Msg
-doneListItem i t =
-    div []
-        [ text "DONE ITEM VIEW" ]
-
-
-
--- el
--- [ Font.color c
--- , Font.size 20
--- , width <| fillPortion 3
--- , Border.innerGlow c 3
--- , width (px 75)
--- , height (px 75)
--- , Border.rounded 10
--- , BG.color C.darkBase1
--- , pointer
--- , onClick <| DoneTimerClicked i
--- ]
--- (column
---     [ mouseOver [ Border.glow c 3 ]
---     , width (px 70)
---     , height (px 70)
---     , Border.rounded 10
---     , centerX
---     , centerY
---     ]
---     [ el [ centerX, centerY ] <| text <| t.name
---     , el [ centerX, centerY ] <|
---         text <|
---             timeToString <|
---                 timeLeft t
---     ]
--- )
 -- TODO Refactor away
 
 
@@ -907,7 +835,7 @@ modelDecoder =
 
 modelDecoderHelper : String -> D.Decoder Model
 modelDecoderHelper state =
-
+    case state of
         "Paused" ->
             D.map3 Paused
                 (D.field "que" (D.list timerDecoder))
@@ -915,7 +843,7 @@ modelDecoderHelper state =
                 (D.field "done" (D.list timerDecoder))
 
         _ ->
-            D.fail "invalid timer state"
+            Debug.todo ""
 
 
 timerDecoder : D.Decoder Timer

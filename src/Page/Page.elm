@@ -22,13 +22,12 @@ type Model
 
 
 type Page
-    = Home
-    | Katas
+    = Landing
     | FizzBuzz FizzBuzz.Model
     | RomanNumerals Numerals.Model
     | PrimeFactorization Prime.Model
     | Visuals Visuals.Model
-    | Resources
+    | Diary
     | Timer Timer.Model
     | Search Search.Model
     | NotFound_404
