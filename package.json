@@ -1,11 +1,19 @@
 {
-  "name": "spa-server",
+  "name": "salty-noodles",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "elm-test",
+    "start": "elm-app start",
+    "watch": "elm-test --watch",
+    "build-elm": "elm-app build",
+    "build-container":"docker build . -t johanstyl/noodle",
+    "container-dev":"docker run -p 3000:3000 --name noodle -d johanstyl/noodle",
+    "push-container":"docker push johanstyl/noodle",
+    "build-push": "npm run build-elm && npm run build-container && npm run push-container",
+    "prod":"node server.js"
+
   },
   "keywords": [],
   "author": "",
