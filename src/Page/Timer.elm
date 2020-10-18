@@ -36,7 +36,7 @@ init : Model
 init =
     Paused
         []
-        (timer "sample" 60 Correct)
+        (timer "sample" 5 Correct)
         []
 
 
@@ -69,15 +69,18 @@ update msg model =
                         newElapsed =
                             active.timePassed + 1
                     in
-                    if timeLeft active > 0 then
+                    if timeLeft active > 1 then
                         ( Running que { active | timePassed = newElapsed } done, Cmd.none )
 
-                    else
+                    else if List.length que > 0 then
                         let
                             ( newQue, newActive, newDone ) =
                                 tryShiftForward ( que, active, done )
                         in
                         ( Running newQue newActive newDone, soundPort active.sound )
+
+                    else
+                        ( Paused que { active | timePassed = active.length } done, soundPort active.sound )
 
                 _ ->
                     ( model, Cmd.none )
@@ -273,6 +276,10 @@ controls =
         , button [ class "timers__button", onClick ResetActive ] [ text "reset" ]
         , button [ class "timers__button", onClick ResetAll ] [ text "reset all" ]
         , button [ class "timers__button", onClick EditTimersClicked ] [ text "edit" ]
+        , button [ class "timers__button", onClick <| Beep Click ] [ text "click" ]
+        , button [ class "timers__button", onClick <| Beep Coin ] [ text "coin" ]
+        , button [ class "timers__button", onClick <| Beep Correct ] [ text "correct" ]
+        , button [ class "timers__button", onClick <| Beep Jingle ] [ text "jingle" ]
         ]
 
 

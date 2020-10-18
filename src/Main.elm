@@ -13,6 +13,7 @@ import Page.PrimeFactorization as Prime
 import Page.Resources as Resources
 import Page.RomanNumerals as Numeral exposing (Numeral(..))
 import Page.Search as Search
+import Page.Stack as Stack
 import Page.Timer as Timer exposing (..)
 import Page.Visuals as Visuals
 import Task
@@ -103,6 +104,7 @@ initialPersistance flags =
                 Numeral.init
                 Prime.init
                 Timer.init
+                Stack.init
 
         Ok data ->
             data
@@ -121,6 +123,7 @@ type Msg
     | GotSearchMsg Search.Msg
     | GotTimerMsg Timer.Msg
     | GotResourceMsg Resources.Msg
+    | GotStackMsg Stack.Msg
     | UpdateLocalStorage
 
 
@@ -188,6 +191,9 @@ update msg model =
         GotResourceMsg _ ->
             ( model, Cmd.none )
 
+        GotStackMsg _ ->
+            ( model, Cmd.none )
+
         UpdateLocalStorage ->
             ( model, Cmd.none )
 
@@ -229,6 +235,9 @@ urlUpdate url model =
                 "/timer" ->
                     Page.fromModel <| Page.T model.persistance.timer
 
+                "/stack" ->
+                    Page.fromModel <| Page.ST model.persistance.stack
+
                 _ ->
                     Page.NotFound_404
     in
@@ -256,6 +265,7 @@ menu model =
             [ li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/katas" ] [ text "katas" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
+            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/stack" ] [ text "stack" ] ]
             ]
         , button [ class "main-nav__clock" ] [ a [ class "main-nav__link main-nav__clock", href "/timer" ] [ text (timeString model.zone model.time) ] ]
         ]
@@ -284,6 +294,12 @@ mainContent model =
 
         Resources ->
             section [ class "main" ] [ Resources.view |> Html.map GotResourceMsg ]
+
+        Visuals visualsModel ->
+            section [ class "main" ] [ Visuals.view visualsModel |> Html.map GotVisualsMsg ]
+
+        Stack stackModel ->
+            section [ class "main" ] [ Stack.view stackModel |> Html.map GotStackMsg ]
 
         _ ->
             section [ class "main" ] [ pageNotFound_404 ]
@@ -338,6 +354,7 @@ footer model =
     Html.footer [ class "footer" ]
         [ blockquote [] [ text "Slow is smooth. Smooth is fast." ]
         , cite [] [ text "/ John Sensei" ]
+        , p [ class "footer__version-info" ] [ text "build: 20201018_2321" ]
         ]
 
 
@@ -349,11 +366,12 @@ persistDecoderHelper : String -> D.Decoder PersistV2
 persistDecoderHelper versionString =
     case versionString of
         "v2" ->
-            D.map4 PersistV2
+            D.map5 PersistV2
                 (D.field "fizzbuzz" FizzBuzz.modelDecoder)
                 (D.field "numerals" Numeral.modelDecoder)
                 (D.field "prime" Prime.modelDecoder)
                 (D.field "timer" Timer.modelDecoder)
+                (D.field "stack" Stack.modelDecoder)
 
         _ ->
             D.fail "unhandled storage version"
@@ -370,6 +388,7 @@ type alias PersistV2 =
     , numerals : Numeral.Model
     , primeFactors : Prime.Model
     , timer : Timer.Model
+    , stack : Stack.Model
     }
 
 

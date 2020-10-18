@@ -7,6 +7,7 @@ import Page.FizzBuzz as FizzBuzz
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numerals
 import Page.Search as Search
+import Page.Stack as Stack
 import Page.Timer as Timer
 import Page.Visuals as Visuals
 import Url exposing (Url)
@@ -19,6 +20,7 @@ type Model
     | V Visuals.Model
     | T Timer.Model
     | S Search.Model
+    | ST Stack.Model
 
 
 type Page
@@ -31,6 +33,7 @@ type Page
     | Resources
     | Timer Timer.Model
     | Search Search.Model
+    | Stack Stack.Model
     | NotFound_404
 
 
@@ -54,3 +57,6 @@ fromModel m =
 
         S model ->
             Search model
+
+        ST model ->
+            Stack model
