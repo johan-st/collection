@@ -238,18 +238,10 @@ view model =
 
 editorView : List Timer -> Timer -> List Timer -> ( Int, Int ) -> Html Msg
 editorView que active done ( min, sec ) =
-    section [] [ text "EDITOR" ]
-
-
-
--- column
--- [ centerX ]
--- [ wrappedRow
---     [ paddingXY 15 100, width fill, spacing 10 ]
---     [ editQueView que, editTimer active ( min, sec ), editDoneView done ]
--- , wrappedRow [ padding 15, spacing 10, centerX ]
---     [ resetButton, editButton ]
--- ]
+    section []
+        [ text "EDITOR"
+        , controls
+        ]
 
 
 editTimer : Timer -> ( Int, Int ) -> Html Msg
@@ -257,98 +249,30 @@ editTimer t ( min, sec ) =
     div [] [ text "EDIT TIMER" ]
 
 
-
--- el
---     [ Font.color C.accent1
---     , Font.size 60
---     , width <| fillPortion 3
---     , Border.innerGlow C.accent1 10
---     , width (px 250)
---     , height (px 250)
---     , Border.rounded 50
---     , BG.color C.darkBase1
---     , centerX
---     ]
---     (column
---         [ mouseOver [ Border.glow C.accent1 10 ]
---         , spacing 10
---         , width (px 245)
---         , height (px 245)
---         , Border.rounded 50
---         , centerX
---         , centerY
---         ]
---         [ Input.text
---             [ width (px 225)
---             , height (px 80)
---             , padding 10
---             , Border.rounded 50
---             , centerX
---             , centerY
---             , BG.color (rgba 0 0 0 0)
---             ]
---             { onChange = TimerNameChanged
---             , text = t.name
---             , placeholder = Nothing
---             , label = Input.labelHidden "timer label"
---             }
---         , row [ centerX, centerY ]
---             [ Input.text
---                 [ width (px 100)
---                 , height (px 80)
---                 , padding 10
---                 , Border.roundEach
---                     { topLeft = 50
---                     , topRight = 0
---                     , bottomLeft = 50
---                     , bottomRight = 0
---                     }
---                 , centerX
---                 , centerY
---                 , BG.color (rgba 0 0 0 0)
---                 ]
---                 { onChange = TimerMinuteChanged
---                 , text = String.fromInt min
---                 , placeholder = Nothing
---                 , label = Input.labelHidden "minutes"
---                 }
---             , Input.text
---                 [ width (px 100)
---                 , height (px 80)
---                 , padding 10
---                 , Border.roundEach
---                     { topLeft = 0
---                     , topRight = 50
---                     , bottomLeft = 0
---                     , bottomRight = 50
---                     }
---                 , centerX
---                 , centerY
---                 , BG.color (rgba 0 0 0 0)
---                 ]
---                 { onChange = TimerSecondChanged
---                 , text = String.fromInt sec
---                 , placeholder = Nothing
---                 , label = Input.labelHidden "seconds"
---                 }
---             ]
---         ]
---     )
-
-
 timersView : List Timer -> Timer -> List Timer -> Html Msg
 timersView que active done =
     section []
-        [ text "timers"
-        , div
-            [ class "timer__timer" ]
+        [ div
+            [ class "timers" ]
             [ queView que
             , activeTimer active
             , doneView done
             ]
-        , div
-            [ class "timer__control" ]
-            []
+        , controls
+        ]
+
+
+controls : Html Msg
+controls =
+    let
+        playOrPause =
+            "pp"
+    in
+    div [ class "timers__control" ]
+        [ button [ class "timers__button", onClick StartPauseClicked ] [ text playOrPause ]
+        , button [ class "timers__button", onClick ResetActive ] [ text "reset" ]
+        , button [ class "timers__button", onClick ResetAll ] [ text "reset all" ]
+        , button [ class "timers__button", onClick EditTimersClicked ] [ text "edit" ]
         ]
 
 
@@ -357,42 +281,17 @@ resetButton =
     div [] [ text "reset all" ]
 
 
-
---     el
---         [ Border.rounded 10
---         , Border.width 1
---         , padding 20
---         , centerX
---         , onClick ResetAll
---         , pointer
---         , mouseOver
---             [ Border.glow C.accent3 5 ]
---         ]
-
-
 editButton : Html Msg
 editButton =
-    -- el
-    --     [ Border.rounded 10
-    --     , Border.width 1
-    --     , padding 20
-    --     , centerX
-    --     , onClick EditTimersClicked
-    --     , pointer
-    --     , mouseOver
-    --         [ Border.glow C.accent1 5 ]
     --     ]
     div [] [ text "Editor on/off" ]
 
 
 activeTimer : Timer -> Html Msg
 activeTimer t =
-    section []
-        [ text "active"
-        , div []
-            [ text t.name
-            , text (timeToString (timeLeft t))
-            ]
+    div [ class "timers__timer" ]
+        [ div [ class "timers__name" ] [ text t.name ]
+        , div [ class "timers__time-left" ] [ text <| String.fromInt (t.length - t.timePassed) ]
         ]
 
 
@@ -414,30 +313,9 @@ editQueView que =
     div [] [ text "EDIT QUE VIEW" ]
 
 
-
--- row
---     [ Font.color C.accent1
---     , width <| fillPortion 1
---     , spacing 5
---     ]
--- <|
---     List.indexedMap (queListItem C.accent1) <|
---         List.reverse que
-
-
 editDoneView : List Timer -> Html Msg
 editDoneView que =
     div [] [ text "EDIT DONE VIEW" ]
-
-
-
--- row
---     [ Font.color C.accent1
---     , width <| fillPortion 1
---     , spacing 5
---     ]
--- <|
---     List.indexedMap (doneListItem C.accent1) que
 
 
 queView : List Timer -> Html Msg
@@ -463,36 +341,6 @@ queListItem i t =
     div [] [ text "QUE ITEM VIEW" ]
 
 
-
--- el
---     [ Font.color c
---     , Font.size 20
---     , width <| fillPortion 3
---     , Border.innerGlow c 3
---     , width (px 75)
---     , height (px 75)
---     , Border.rounded 10
---     , BG.color C.darkBase1
---     , pointer
---     , onClick <| QueTimerClicked i
---     ]
---     (column
---         [ mouseOver [ Border.glow c 3 ]
---         , width (px 70)
---         , height (px 70)
---         , Border.rounded 10
---         , centerX
---         , centerY
---         ]
---         [ el [ centerX, centerY ] <| text <| t.name
---         , el [ centerX, centerY ] <|
---             text <|
---                 timeToString <|
---                     timeLeft t
---         ]
---     )
-
-
 doneListItem : Int -> Timer -> Html Msg
 doneListItem i t =
     div []
@@ -500,33 +348,6 @@ doneListItem i t =
 
 
 
--- el
--- [ Font.color c
--- , Font.size 20
--- , width <| fillPortion 3
--- , Border.innerGlow c 3
--- , width (px 75)
--- , height (px 75)
--- , Border.rounded 10
--- , BG.color C.darkBase1
--- , pointer
--- , onClick <| DoneTimerClicked i
--- ]
--- (column
---     [ mouseOver [ Border.glow c 3 ]
---     , width (px 70)
---     , height (px 70)
---     , Border.rounded 10
---     , centerX
---     , centerY
---     ]
---     [ el [ centerX, centerY ] <| text <| t.name
---     , el [ centerX, centerY ] <|
---         text <|
---             timeToString <|
---                 timeLeft t
---     ]
--- )
 -- TODO Refactor away
 
 
@@ -726,11 +547,6 @@ port soundPortActual : String -> Cmd msg
 
 
 -- ENDODE / DECODE
--- type Model
---     = Stopped (List Timer) Timer
---     | Paused (List Timer) Timer (List Timer)
---     | Running (List Timer) Timer (List Timer)
---     | Ended Timer (List Timer)
 
 
 modelDecoder : D.Decoder Model
@@ -813,15 +629,6 @@ modelEncoder model =
 
         _ ->
             E.string "broken"
-
-
-
--- Ended act done ->
---     E.object
---         [ ( "state", E.string "Ended" )
---         , ( "active", timerEncoder act )
---         , ( "done", E.list timerEncoder done )
---         ]
 
 
 timerEncoder : Timer -> E.Value

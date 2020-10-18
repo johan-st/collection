@@ -14,7 +14,9 @@ import Test exposing (..)
 
 
 katas : Test
-katas =describe "FizzBuzz"
+katas =
+    describe "Logic"
+        [ describe "FizzBuzz"
             [ fuzz (intRange 1 9999) "Positive Numbers" <|
                 \int ->
                     let
@@ -75,4 +77,4 @@ katas =describe "FizzBuzz"
             --                     Expect.equal (Just (primeFactors int))
             --                )
             ]
-        
+        ]

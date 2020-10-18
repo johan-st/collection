@@ -19,8 +19,6 @@ view =
                 [ li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "https://appliedtechnology.github.io/protips/" ] [ text "Pro Tips" ] ]
 
                 -- , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
-                -- , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
-                -- , li [ class "resources__list-item" ] [ a [ class "resources__list-link", href "URLURL" ] [ text "LINK" ] ]
                 ]
             ]
         , section [ class "resources__section" ]

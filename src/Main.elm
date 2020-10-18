@@ -257,7 +257,7 @@ menu model =
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
             ]
-        , div [ class "main-nav__clock" ] [ text (timeString model.zone model.time) ]
+        , button [ class "main-nav__clock" ] [ a [ class "main-nav__link", href "/timer" ] [ text (timeString model.zone model.time) ] ]
         ]
 
 
@@ -312,7 +312,22 @@ pageHome : Model -> Html Msg
 pageHome model =
     section [ class "home" ]
         [ h1 [ class "home__heading" ] [ text "Welcome noodle!" ]
-        , img [ src "https://media.giphy.com/media/RIpevxkTjCXW46Osr5/giphy.gif" ] []
+        , img [ class "home__illustration", src "https://media.giphy.com/media/RIpevxkTjCXW46Osr5/giphy.gif" ] []
+        , h2 [ class "home__subheading" ] [ text "Here is my most used links" ]
+        , ul [ class "home__link-list" ]
+            [ li [ class "home__list-item" ] [ a [ class "home__link", href "https://appliedtechnology.github.io/protips/" ] [ text "Pro Tips" ] ]
+            , li [ class "home__list-item" ] [ a [ class "home__link", href "https://expressjs.com/" ] [ text "express.js" ] ]
+            , li [ class "home__list-item" ] [ a [ class "home__link", href "https://fonts.google.com/" ] [ text "Google Fonts" ] ]
+            , li [ class "home__list-item" ] [ a [ class "home__link", href "https://www.pexels.com/" ] [ text "pexels (photo, video)" ] ]
+            ]
+        ]
+
+
+pageNotFound_404 : Html Msg
+pageNotFound_404 =
+    section [ class "404__heading" ]
+        [ h1 [] [ text "404: not found" ]
+        , img [ class "404__illustration", src "https://media.giphy.com/media/QWFz3HbZpk4aiu9vZC/giphy.gif" ] []
         ]
 
 
@@ -322,11 +337,6 @@ footer model =
         [ blockquote [] [ text "Slow is smooth. Smooth is fast." ]
         , cite [] [ text "/ John Sensei" ]
         ]
-
-
-pageNotFound_404 : Html Msg
-pageNotFound_404 =
-    div [ class "404__heading" ] [ text "Sorry couldn't find that page" ]
 
 
 

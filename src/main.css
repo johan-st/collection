@@ -1,4 +1,5 @@
 @import "https://unpkg.com/purecss@2.0.3/build/pure-min.css";
+
 :root {
   --clr-bg: #333333;
   --clr-bg2: #222222;
@@ -48,6 +49,10 @@ a:hover {
 li {
   list-style-type: none;
 }
+img {
+  width: 100%;
+  max-width: 40rem;
+}
 .main-nav {
   position: fixed;
   width: 100%;
@@ -63,23 +68,57 @@ li {
   grid-template-columns: auto auto auto;
 }
 .main-nav__clock {
-  position: fixed;
   color: var(--clr-accent);
-  float: right;
-  right: 2rem;
+  background-color: var(--clr-bg);
+  cursor: pointer;
+  border: none;
+}
+.main-nav__clock:hover {
+  background-color: var(--clr-bg2);
+  height: 100%;
 }
 .main-nav__link:hover {
   background-color: var(--clr-bg2);
 }
 .main {
-  min-height: 80vh;
   grid-area: main;
+  width: 100vw;
 }
 .footer {
   margin-top: 200px;
   margin-bottom: 50px;
   grid-area: foot;
 }
+
+/* HOME */
+.home__link-list {
+  padding: 0.5rem 0;
+
+  display: flex;
+  justify-content: center;
+}
+.home__link {
+  padding: 0.5rem 1rem;
+  box-shadow: var(--card-shadow);
+}
+
+/* RESOURCES */
+.resources__section {
+  margin-top: 2rem;
+  padding: 0.5rem 0;
+  box-shadow: var(--card-shadow);
+}
+.resources__list-heading {
+  color: var(--clr-secondary);
+  font-size: 1.5rem;
+  text-transform: capitalize;
+  font-variant: small-caps;
+}
+.resources__list-subheading {
+  font-size: 1.1rem;
+}
+
+/* KATA LINKS */
 .kata-links {
   display: flex;
   flex-direction: column;
@@ -108,43 +147,53 @@ li {
   background-color: inherit;
 }
 
-.resources__section {
-  margin-top: 2rem;
-  padding: 0.5rem 0;
-  box-shadow: var(--card-shadow);
-}
-.resources__list-heading {
-  color: var(--clr-secondary);
-  font-size: 1.5rem;
-  text-transform: capitalize;
-  font-variant: small-caps;
-}
-.resources__list-subheading {
-  font-size: 1.1rem;
-}
-
+/* KATAS */
 .kata__heading {
   font-size: 2rem;
 }
 .kata__result {
   font-size: 1.1rem;
 }
-
 .kata__fizzbuzz-number--num {
   color: var(--clr-primary);
 }
-
 .kata__fizzbuzz-number--fizz {
   color: var(--clr-accent);
 }
-
 .kata__fizzbuzz-number--buzz {
   color: var(--clr-accent2);
 }
-
 .kata__fizzbuzz-number--fizzbuzz {
   color: var(--clr-accent3);
 }
 .kata__numerals-result {
   font-family: serif;
+}
+
+/* TIMER */
+.timers {
+  box-shadow: var(--card-shadow);
+}
+.timers__time-left {
+  font-size: 2rem;
+  color: var(--clr-accent);
+}
+.timers__timer {
+  box-shadow: var(--card-shadow);
+}
+.timers__name {
+  font-size: 1.2rem;
+}
+.timers__control {
+  box-shadow: var(--card-shadow);
+}
+.timers__button {
+  height: 2rem;
+  padding: 0 2rem;
+  color: var(--clr-secondary);
+  background-color: var(--clr-bg);
+  border: 1px solid var(--clr-secondary);
+}
+.timers__button:hover {
+  background-color: var(--clr-bg2);
 }
