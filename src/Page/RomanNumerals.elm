@@ -1,8 +1,8 @@
 module Page.RomanNumerals exposing (..)
 
-import Html exposing (..)
-import Html.Attributes exposing (class, type_, value)
-import Html.Events exposing (onInput)
+import Element exposing (..)
+import Element.Font as Font
+import Element.Input as Input
 import Json.Decode as D
 import Json.Encode as E
 import Utils.Color as C
@@ -18,13 +18,35 @@ type alias Model =
     }
 
 
-view : Model -> Html Msg
+view : Model -> Element Msg
 view { input, nums } =
-    section [ class "kata" ]
-        [ h1 [ class "kata__heading" ] [ text "Roman Numerals" ]
-        , Html.input [ type_ "number", value input, onInput InputChanged ] []
-        , label [] [ text "enter a number (1-3999)" ]
-        , p [ class "kata__result kata__numerals-result" ] [ text (numsToString nums) ]
+    column
+        [ centerX
+        , centerY
+        ]
+        [ Input.text
+            [ width (px 300)
+            , centerX
+            ]
+            { onChange = InputChanged
+            , text = input
+            , placeholder = Nothing
+            , label =
+                Input.labelAbove []
+                    (text "enter a number (1-3999)")
+            }
+        , column
+            [ centerX
+            , padding 30
+            ]
+            [ el
+                [ Font.size 60
+                , Font.family [ Font.serif ]
+                , Font.color C.accent4
+                ]
+              <|
+                text (numsToString nums)
+            ]
         ]
 
 

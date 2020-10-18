@@ -1,12 +1,16 @@
 module Page.PrimeFactorization exposing (..)
 
 import Arithmetic exposing (primeFactors)
-import Html exposing (..)
-import Html.Attributes as Attr exposing (..)
-import Html.Events exposing (onInput)
+import Element exposing (..)
+import Element.Font as Font
+import Element.Input as Input
 import Json.Decode as D
 import Json.Encode as E
 import Utils.Color as C
+
+
+type Msg
+    = NumberChanged String
 
 
 
@@ -14,45 +18,58 @@ import Utils.Color as C
 
 
 type alias Model =
-    { input : String }
+    String
 
 
 init : Model
 init =
-    { input = "12" }
-
-
-type Msg
-    = InputChanged String
+    "12"
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg _ =
     case msg of
-        InputChanged numberInput ->
+        NumberChanged numberInput ->
             case String.toInt numberInput of
                 Just _ ->
-                    ( { model | input = numberInput }, Cmd.none )
+                    ( numberInput, Cmd.none )
 
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( "", Cmd.none )
 
 
-view : Model -> Html Msg
-view model =
-    section [ class "kata" ]
-        [ div []
-            [ h1 [ class "kata__heading" ] [ text "Prime Factorization" ]
-            , input [ type_ "number", value model.input, onInput InputChanged ] []
+view : String -> Element Msg
+view input =
+    column
+        [ centerX
+        , centerY
+        ]
+        [ Input.text
+            [ width (px 300)
+            , centerX
             ]
-        , span [ class "kata__result" ] <|
-            List.map
-                (\int ->
-                    text <|
-                        " "
-                            ++ String.fromInt int
-                )
-                (primeFactors (Maybe.withDefault 0 (String.toInt model.input)))
+            { onChange = NumberChanged
+            , text = input
+            , placeholder = Nothing
+            , label =
+                Input.labelAbove []
+                    (text "enter a number to factorize")
+            }
+        , column
+            [ centerX
+            , padding 30
+            ]
+            [ wrappedRow
+                [ spacing 5 ]
+              <|
+                List.map
+                    (\int ->
+                        el [ Font.color C.subtle ] <|
+                            text <|
+                                String.fromInt int
+                    )
+                    (primeFactors (Maybe.withDefault 0 (String.toInt input)))
+            ]
         ]
 
 
@@ -122,12 +139,9 @@ fact ( int, list ) =
 
 modelEncoder : Model -> E.Value
 modelEncoder model =
-    E.object
-        [ ( "input", E.string model.input )
-        ]
+    E.string model
 
 
 modelDecoder : D.Decoder Model
 modelDecoder =
-    D.map Model
-        (D.field "input" D.string)
+    D.string

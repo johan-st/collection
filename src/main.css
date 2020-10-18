@@ -1,150 +1,26 @@
-@import "https://unpkg.com/purecss@2.0.3/build/pure-min.css";
-:root {
-  --clr-bg: #333333;
-  --clr-bg2: #222222;
-  --clr-primary: #d8d8d8;
-  --clr-secondary: #9c9c9c;
-  --clr-accent: #55aaff;
-  --clr-accent2: #ff8800;
-  --clr-accent3: #fffb00;
-  --ff: "Source Sans Pro", "Trebuchet MS", "Lucida Grande",
-    "Bitstream Vera Sans", "Helvetica Neue", sans-serif;
+/*
+  elm-hot creates an additional div wrapper around the app to make HMR possible.
+  This could break styling in development mode if you are using Elm UI.
 
-  --card-shadow: 0 0 5px hsl(0, 0%, 0%), 1px -1px 3px hsla(0, 0%, 100%, 0.5);
-  background-color: var(--clr-bg);
-}
-
+  More context in the issue:
+    https://github.com/halfzebra/create-elm-app/issues/320
+*/
 [data-elm-hot="true"] {
   height: inherit;
 }
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
+
 body {
-  font-family: var(--ff);
+  font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
   text-align: center;
-  color: var(--clr-primary);
-  display: grid;
-  grid-template-rows: 3rem auto auto;
-  grid-template-areas:
-    "nav"
-    "main"
-    "foot";
+  color: #293c4b;
 }
 
-a {
-  color: var(--clr-primary);
-  display: block;
-  padding: 0.5rem 0;
-  text-decoration: none;
-  white-space: nowrap;
-}
-a:hover {
-  background-color: var(--clr-bg2);
-}
-li {
-  list-style-type: none;
-}
-.main-nav {
-  position: fixed;
-  width: 100%;
-  grid-area: nav;
-  display: grid;
-  grid-template-columns: 1fr 3fr 1fr;
-  align-items: center;
-  background-color: var(--clr-bg);
-  box-shadow: 0 0 10px black;
-}
-.main-nav__list {
-  display: grid;
-  grid-template-columns: auto auto auto;
-}
-.main-nav__clock {
-  position: fixed;
-  color: var(--clr-accent);
-  float: right;
-  right: 2rem;
-}
-.main-nav__link:hover {
-  background-color: var(--clr-bg2);
-}
-.main {
-  min-height: 80vh;
-  grid-area: main;
-}
-.footer {
-  margin-top: 200px;
-  margin-bottom: 50px;
-  grid-area: foot;
-}
-.kata-links {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.kata-links__description {
-  color: var(--clr-secondary);
-  max-width: 30rem;
-}
-.kata-links__card {
-  width: 30rem;
-  max-width: 90vw;
-  padding: 1rem;
-  margin: 1rem 0;
-  border-radius: 5px;
-  transition: background 150ms;
-  transition-delay: 20ms;
-  box-shadow: var(--card-shadow);
-}
-.kata-links__card:hover {
-  background-color: var(--clr-bg2);
-  cursor: pointer;
-  /* border: 2px solid var(--clr-accent); */
-}
-.kata-links__link:hover {
-  background-color: inherit;
+h1 {
+  font-size: 30px;
 }
 
-.resources__section {
-  margin-top: 2rem;
-  padding: 0.5rem 0;
-  box-shadow: var(--card-shadow);
-}
-.resources__list-heading {
-  color: var(--clr-secondary);
-  font-size: 1.5rem;
-  text-transform: capitalize;
-  font-variant: small-caps;
-}
-.resources__list-subheading {
-  font-size: 1.1rem;
-}
-
-.kata__heading {
-  font-size: 2rem;
-}
-.kata__result {
-  font-size: 1.1rem;
-}
-
-.kata__fizzbuzz-number--num {
-  color: var(--clr-primary);
-}
-
-.kata__fizzbuzz-number--fizz {
-  color: var(--clr-accent);
-}
-
-.kata__fizzbuzz-number--buzz {
-  color: var(--clr-accent2);
-}
-
-.kata__fizzbuzz-number--fizzbuzz {
-  color: var(--clr-accent3);
-}
-.kata__numerals-result {
-  font-family: serif;
+img {
+  margin: 20px 0;
+  max-width: 200px;
 }
