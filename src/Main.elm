@@ -258,9 +258,6 @@ menu model =
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
             ]
 
-        -- , li [ class "main-nav__list-item" ] [ a [ href "/timer" ] [ text "timer" ] ]
-        , div [ class "main-nav__clock" ] [ text (timeString model.zone model.time) ]
-        ]
 
 
 mainContent : Model -> Html Msg
