@@ -1,12 +1,17 @@
 port module Page.Timer exposing (..)
 
-import Html exposing (..)
-import Html.Attributes exposing (class)
-import Html.Events exposing (onClick, onDoubleClick)
+import Element exposing (..)
+import Element.Background as BG
+import Element.Border as Border
+import Element.Events exposing (onClick, onDoubleClick)
+import Element.Font as Font
+import Element.Input as Input
+import Html exposing (input)
 import Json.Decode as D
 import Json.Encode as E
 import Page.PrimeFactorization exposing (Model)
 import Time exposing (Posix)
+import Utils.Color as C
 
 
 type alias Timer =
@@ -206,7 +211,7 @@ update msg model =
 --             Paused done active que
 
 
-view : Model -> Html Msg
+view : Model -> Element Msg
 view model =
     h1 [] [ text "No view created" ]
 
@@ -718,6 +723,7 @@ view model =
 --                         tryShiftBackwards ( done, active, que )
 --                 in
 --                 reccTryShiftBackwards i (Edit newDone newActive newQue (toMinSec newActive))
+
 -- SOUND
 
 
@@ -771,7 +777,7 @@ modelDecoderHelper state =
                 (D.field "done" (D.list timerDecoder))
 
         _ ->
-            D.fail "invalid timer state"
+            Debug.todo ""
 
 
 timerDecoder : D.Decoder Timer
