@@ -333,7 +333,6 @@ view model =
     }
 
 
-
 menu : Model -> Html Msg
 menu model =
     nav [ class "main-nav" ]
@@ -344,6 +343,8 @@ menu model =
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
             ]
         ]
+
+
 
 -- NAVIGATION --
 
