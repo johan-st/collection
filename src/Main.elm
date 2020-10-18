@@ -257,7 +257,7 @@ menu model =
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
             ]
-
+        ]
 
 
 mainContent : Model -> Html Msg
