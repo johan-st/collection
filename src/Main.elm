@@ -3,7 +3,7 @@ port module Main exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Navigation
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, src, type_)
 import Html.Events exposing (onClick)
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
@@ -257,8 +257,6 @@ menu model =
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
             ]
-
-        -- , li [ class "main-nav__list-item" ] [ a [ href "/timer" ] [ text "timer" ] ]
         , div [ class "main-nav__clock" ] [ text (timeString model.zone model.time) ]
         ]
 
@@ -312,13 +310,18 @@ pageKatasOverview model =
 
 pageHome : Model -> Html Msg
 pageHome model =
-    article [ class "home" ]
-        [ h1 [ class "home__heading" ] [ text "Welcome noodle!" ] ]
+    section [ class "home" ]
+        [ h1 [ class "home__heading" ] [ text "Welcome noodle!" ]
+        , img [ src "https://media.giphy.com/media/RIpevxkTjCXW46Osr5/giphy.gif" ] []
+        ]
 
 
 footer : model -> Html Msg
 footer model =
-    div [ class "footer" ] [ text "GO RHINOS!!" ]
+    Html.footer [ class "footer" ]
+        [ blockquote [] [ text "Slow is smooth. Smooth is fast." ]
+        , cite [] [ text "/ John Sensei" ]
+        ]
 
 
 pageNotFound_404 : Html Msg
