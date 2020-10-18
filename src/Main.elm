@@ -333,17 +333,17 @@ view model =
     }
 
 
-viewFrame : Model -> Element Msg
-viewFrame model =
-    column
-        [ width fill
-        , height fill
-        ]
-        [ navBar model
-        , pageViewer model
-        ]
 
-
+menu : Model -> Html Msg
+menu model =
+    nav [ class "main-nav" ]
+        [ a [ href "/", class "main-nav__brand  main-nav__link" ] [ text "</salty noodles>" ]
+        , ul [ class "main-nav__list " ]
+            [ li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/katas" ] [ text "katas" ] ]
+            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
+            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
+            ]
+        ]
 
 -- NAVIGATION --
 
