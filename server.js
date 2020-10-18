@@ -29,8 +29,8 @@ app.all("*", (req, res) => {
 // LOGGER
 function logger(req, res, next) {
   req.uuid = uuid.v4();
-  // console.log(`${req.method}`);
-  console.log(`[${req.uuid}] ${req.method} to ${req.url}`);
+  console.log(`${req.method} to ${req.url}`);
+  // console.log(`[${req.uuid}] ${req.method} to ${req.url}`);
   next();
 }
 

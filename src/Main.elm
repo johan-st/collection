@@ -257,7 +257,7 @@ menu model =
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
             ]
-        , button [ class "main-nav__clock" ] [ a [ class "main-nav__link", href "/timer" ] [ text (timeString model.zone model.time) ] ]
+        , button [ class "main-nav__clock" ] [ a [ class "main-nav__link main-nav__clock", href "/timer" ] [ text (timeString model.zone model.time) ] ]
         ]
 
 
@@ -277,7 +277,7 @@ mainContent model =
             section [ class "main" ] [ Numeral.view model.persistance.numerals |> Html.map GotNumeralMsg ]
 
         PrimeFactorization primeModel ->
-            Prime.view model.persistance.primeFactors |> Html.map GotPrimeMsg
+            section [ class "main" ] [ Prime.view model.persistance.primeFactors |> Html.map GotPrimeMsg ]
 
         Page.Timer timerModel ->
             section [ class "main" ] [ Timer.view model.persistance.timer |> Html.map GotTimerMsg ]
@@ -311,9 +311,11 @@ pageKatasOverview model =
 pageHome : Model -> Html Msg
 pageHome model =
     section [ class "home" ]
-        [ h1 [ class "home__heading" ] [ text "Welcome noodle!" ]
-        , img [ class "home__illustration", src "https://media.giphy.com/media/RIpevxkTjCXW46Osr5/giphy.gif" ] []
-        , h2 [ class "home__subheading" ] [ text "Here is my most used links" ]
+        [ img [ class "home__illustration", src "https://media.giphy.com/media/RIpevxkTjCXW46Osr5/giphy.gif" ] []
+        , h1 [ class "home__heading" ] [ text "Welcome noodle!" ]
+        , p [ class "home__text" ] [ text "to a place of links and playthings.. (mostly links for now)" ]
+        , h2 [ class "home__subheading" ] [ text "here's a few links.." ]
+        , p [ class "home__text" ] [ text "more availible through the navbar up top" ]
         , ul [ class "home__link-list" ]
             [ li [ class "home__list-item" ] [ a [ class "home__link", href "https://appliedtechnology.github.io/protips/" ] [ text "Pro Tips" ] ]
             , li [ class "home__list-item" ] [ a [ class "home__link", href "https://expressjs.com/" ] [ text "express.js" ] ]

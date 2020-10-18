@@ -12,6 +12,11 @@
     "Bitstream Vera Sans", "Helvetica Neue", sans-serif;
 
   --card-shadow: 0 0 5px hsl(0, 0%, 0%), 1px -1px 3px hsla(0, 0%, 100%, 0.5);
+  --card-shadow2: 0px 0px 10px hsl(0, 0%, 0%),
+    1px -1px 3px hsla(0, 0%, 100%, 0.781);
+
+  --trans-time: ease-out 200ms;
+  --trans-delay: 0ms;
   background-color: var(--clr-bg);
 }
 
@@ -24,6 +29,7 @@
   box-sizing: border-box;
 }
 body {
+  min-width: 300px;
   font-family: var(--ff);
   margin: 0;
   text-align: center;
@@ -43,9 +49,7 @@ a {
   text-decoration: none;
   white-space: nowrap;
 }
-a:hover {
-  background-color: var(--clr-bg2);
-}
+
 li {
   list-style-type: none;
 }
@@ -82,7 +86,6 @@ img {
 }
 .main {
   grid-area: main;
-  width: 100vw;
 }
 .footer {
   margin-top: 200px;
@@ -91,15 +94,26 @@ img {
 }
 
 /* HOME */
+.home__text {
+  margin-bottom: 3rem;
+  color: var(--clr-secondary);
+}
 .home__link-list {
   padding: 0.5rem 0;
-
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 .home__link {
   padding: 0.5rem 1rem;
+  margin: 0.2rem;
   box-shadow: var(--card-shadow);
+  border-radius: 5px;
+  transition: var(--trans-time);
+  transition-delay: var(--trans-delay);
+}
+.home__link:hover {
+  box-shadow: var(--card-shadow2);
 }
 
 /* RESOURCES */
@@ -117,7 +131,9 @@ img {
 .resources__list-subheading {
   font-size: 1.1rem;
 }
-
+.resources__list-link:hover {
+  background-color: var(--clr-bg2);
+}
 /* KATA LINKS */
 .kata-links {
   display: flex;
@@ -134,14 +150,13 @@ img {
   padding: 1rem;
   margin: 1rem 0;
   border-radius: 5px;
-  transition: background 150ms;
-  transition-delay: 20ms;
+  transition: var(--trans-time);
+  transition-delay: var(--trans-delay);
   box-shadow: var(--card-shadow);
+  cursor: pointer;
 }
 .kata-links__card:hover {
-  background-color: var(--clr-bg2);
-  cursor: pointer;
-  /* border: 2px solid var(--clr-accent); */
+  box-shadow: var(--card-shadow2);
 }
 .kata-links__link:hover {
   background-color: inherit;
