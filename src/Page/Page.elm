@@ -4,6 +4,7 @@ import Element exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 import Page.FizzBuzz as FizzBuzz
+import Page.Gallery as Gallery
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numerals
 import Page.Search as Search
@@ -21,6 +22,7 @@ type Model
     | T Timer.Model
     | S Search.Model
     | ST Stack.Model
+    | G Gallery.Model
 
 
 type Page
@@ -34,6 +36,7 @@ type Page
     | Timer Timer.Model
     | Search Search.Model
     | Stack Stack.Model
+    | Gallery Gallery.Model
     | NotFound_404
 
 
@@ -60,3 +63,6 @@ fromModel m =
 
         ST model ->
             Stack model
+
+        G model ->
+            Gallery model

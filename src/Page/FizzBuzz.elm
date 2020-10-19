@@ -5,7 +5,6 @@ import Html.Attributes as Attr exposing (..)
 import Html.Events exposing (onInput)
 import Json.Decode as D
 import Json.Encode as E
-import Utils.Color as C
 
 
 type Soda

@@ -8,6 +8,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
+import Page.Gallery as Gallery
 import Page.Page as Page exposing (Page(..))
 import Page.PrimeFactorization as Prime
 import Page.Resources as Resources
@@ -72,6 +73,9 @@ init flags url key =
                 "/timer" ->
                     Page.Timer persist.timer
 
+                "/gallery" ->
+                    Page.Gallery persist.gallery
+
                 _ ->
                     Page.NotFound_404
 
@@ -105,6 +109,7 @@ initialPersistance flags =
                 Prime.init
                 Timer.init
                 Stack.init
+                Gallery.init
 
         Ok data ->
             data
@@ -124,6 +129,7 @@ type Msg
     | GotTimerMsg Timer.Msg
     | GotResourceMsg Resources.Msg
     | GotStackMsg Stack.Msg
+    | GotGalleryMsg Gallery.Msg
     | UpdateLocalStorage
 
 
@@ -194,6 +200,9 @@ update msg model =
         GotStackMsg _ ->
             ( model, Cmd.none )
 
+        GotGalleryMsg _ ->
+            ( model, Cmd.none )
+
         UpdateLocalStorage ->
             ( model, Cmd.none )
 
@@ -238,6 +247,9 @@ urlUpdate url model =
                 "/stack" ->
                     Page.fromModel <| Page.ST model.persistance.stack
 
+                "/gallery" ->
+                    Page.fromModel <| Page.G model.persistance.gallery
+
                 _ ->
                     Page.NotFound_404
     in
@@ -264,7 +276,7 @@ menu model =
         , ul [ class "main-nav__list " ]
             [ li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/katas" ] [ text "katas" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
-            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
+            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/gallery" ] [ text "gallery" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/stack" ] [ text "stack" ] ]
             ]
         , button [ class "main-nav__clock" ] [ a [ class "main-nav__link main-nav__clock", href "/timer" ] [ text (timeString model.zone model.time) ] ]
@@ -300,6 +312,9 @@ mainContent model =
 
         Stack stackModel ->
             section [ class "main" ] [ Stack.view stackModel |> Html.map GotStackMsg ]
+
+        Gallery galleryModel ->
+            section [ class "main" ] [ Gallery.view galleryModel |> Html.map GotGalleryMsg ]
 
         _ ->
             section [ class "main" ] [ pageNotFound_404 ]
@@ -366,12 +381,13 @@ persistDecoderHelper : String -> D.Decoder PersistV2
 persistDecoderHelper versionString =
     case versionString of
         "v2" ->
-            D.map5 PersistV2
+            D.map6 PersistV2
                 (D.field "fizzbuzz" FizzBuzz.modelDecoder)
                 (D.field "numerals" Numeral.modelDecoder)
                 (D.field "prime" Prime.modelDecoder)
                 (D.field "timer" Timer.modelDecoder)
                 (D.field "stack" Stack.modelDecoder)
+                (D.field "gallery" Gallery.modelDecoder)
 
         _ ->
             D.fail "unhandled storage version"
@@ -389,6 +405,7 @@ type alias PersistV2 =
     , primeFactors : Prime.Model
     , timer : Timer.Model
     , stack : Stack.Model
+    , gallery : Gallery.Model
     }
 
 
