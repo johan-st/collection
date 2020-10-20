@@ -1,12 +1,17 @@
 module Page.Gallery exposing (..)
 
+import Bootstrap.Accordion exposing (Card)
 import Bootstrap.Utilities.DomHelper exposing (className)
 import Html exposing (..)
-import Html.Attributes as Attr exposing (class, placeholder, type_)
+import Html.Attributes as Attr exposing (class, placeholder, src, type_)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as D
 import Json.Encode as E
+
+
+loremUrl =
+    "https://picsum.photos/300/300"
 
 
 type alias Model =
@@ -23,6 +28,7 @@ type Images
 type Msg
     = GotImages (Result Http.Error Images)
     | SearchClicked
+    | CardClicked
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -37,6 +43,9 @@ update msg model =
                     ( model, Cmd.none )
 
         SearchClicked ->
+            ( model, Cmd.none )
+
+        CardClicked ->
             ( model, Cmd.none )
 
 
@@ -65,7 +74,14 @@ view _ =
                 ]
                 []
             ]
+        , div [ class "gallery__cardholder" ]
+            (List.repeat 9 imageCard)
         ]
+
+
+imageCard : Html Msg
+imageCard =
+    img [ class "gallery__card", src loremUrl, onClick CardClicked ] []
 
 
 type alias LoremPix =

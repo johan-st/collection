@@ -369,7 +369,7 @@ footer model =
     Html.footer [ class "footer" ]
         [ blockquote [] [ text "Slow is smooth. Smooth is fast." ]
         , cite [] [ text "/ John Sensei" ]
-        , p [ class "footer__version-info" ] [ text "build: 20201018_2321" ]
+        , p [ class "footer__version-info" ] [ text "build: 20201019_1810" ]
         ]
 
 
