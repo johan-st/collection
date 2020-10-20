@@ -1,4 +1,4 @@
-@import "https://unpkg.com/purecss@2.0.3/build/pure-min.css";
+@import url("https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap");
 
 :root {
   --clr-bg: #333333;
@@ -9,8 +9,10 @@
   --clr-accent: #55aaff;
   --clr-accent2: #ff8800;
   --clr-accent3: #fffb00;
+  --clr-card: #ffffff;
   --ff: "Source Sans Pro", "Trebuchet MS", "Lucida Grande",
     "Bitstream Vera Sans", "Helvetica Neue", sans-serif;
+  --hand-font: "Nanum Pen Script", cursive;
 
   --card-shadow: 0 0 5px hsl(0, 0%, 0%), 1px -1px 3px hsla(0, 0%, 100%, 0.5);
   --card-shadow2: 0px 0px 10px hsl(0, 0%, 0%),
@@ -57,6 +59,7 @@ img {
   max-width: 40rem;
 }
 .main-nav {
+  z-index: 10;
   position: fixed;
   width: 100%;
   grid-area: nav;
@@ -102,6 +105,7 @@ img {
   bottom: 0.25rem;
   color: rgb(0, 0, 0);
 }
+
 /* HOME */
 .home__text {
   margin-bottom: 3rem;
@@ -254,20 +258,28 @@ img {
   margin: 0 auto;
 }
 .gallery__card {
+  font-family: var(--hand-font);
+  font-size: 2rem;
+  text-justify: center;
   background-color: transparent;
-  width: 15rem;
-  height: 15rem;
-  padding: 1rem;
+  color: black;
+  width: 16rem;
+  height: 19rem;
   margin: 1rem;
   cursor: pointer;
   perspective: 45rem;
 }
-
+.gallery__card-img {
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
 .gallery__card-inner {
   position: relative;
   width: 100%;
   height: 100%;
+  background-color: var(--clr-card);
   text-align: center;
+  border-radius: 0.5rem;
   transition: transform 0.8s;
   cursor: pointer;
   transform-style: preserve-3d;
@@ -280,6 +292,7 @@ img {
 /* Position the front and back side */
 .gallery__card-front,
 .gallery__card-back {
+  border-radius: 0.5rem;
   position: absolute;
   width: 100%;
   cursor: pointer;
@@ -289,8 +302,7 @@ img {
 
 /* Style the back side */
 .gallery__card-back {
-  background-color: dodgerblue;
-  color: white;
+  background-color: var(--clr-card);
   cursor: pointer;
   transform: rotateY(180deg);
 }

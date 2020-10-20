@@ -6,13 +6,14 @@ import Html exposing (..)
 import Html.Attributes as Attr exposing (class, classList, placeholder, src, type_)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Array exposing (Array)
 import Json.Decode as D
 import Json.Encode as E
 
 
 type alias Model =
     { input : String
-    , cards : List Card
+    , cards : Array Card
     }
 
 
@@ -33,7 +34,7 @@ update msg model =
         GotImages result ->
             case result of
                 Ok cards ->
-                    ( { model | cards = cards }, Cmd.none )
+                    ( { model | cards = (Array.fromList cards) }, Cmd.none )
 
                 Err err ->
                     ( model, Cmd.none )
@@ -44,7 +45,7 @@ update msg model =
         CardClicked index ->
             let
                 newCards =
-                    toggleCard model.cards index
+                    toggleCard  index model.cards
             in
             ( { model | cards = newCards }, Cmd.none )
 
@@ -52,18 +53,19 @@ update msg model =
 init : Model
 init =
     { input = ""
-    , cards = List.repeat 90 (Card loremImage False)
+    , cards = Array.initialize 9 (\_ -> (Card loremImage False)) 
     }
 
 
-toggleCard : List Card -> Int -> List Card
-toggleCard cards index =
-    case cards of
-        list :: rest ->
-            rest
-
-        _ ->
-            []
+toggleCard : Int -> Array Card -> Array Card
+toggleCard  index cards =
+    let 
+        maybeCard = Array.get index cards
+    in 
+        case maybeCard of    
+            Just card ->
+                Array.set index ({card | selected = not card.selected}) cards
+            Nothing -> cards
 
 
 
@@ -85,22 +87,24 @@ view model =
                 []
             ]
         , div [ class "gallery__cardholder" ]
-            (List.map imageCard model.cards)
+          (List.map imageCard (Array.toIndexedList model.cards))
         ]
 
 
-imageCard : Card -> Html Msg
-imageCard card =
+imageCard : (Int,Card) -> Html Msg
+imageCard (index,card) =
     div
         [ classList
             [ ( "gallery__card", True )
             , ( "gallery__card--selected", card.selected )
             ]
-        , onClick (CardClicked 0)
+        , onClick (CardClicked index)
         ]
         [ div [ class "gallery__card-inner" ]
-            [ div [ class "gallery__card-front" ] [ img [ src (imageUrl card.src) ] [] ]
-            , div [ class "gallery__card-back" ] [ text "info info info.. all the info" ]
+            [ div [ class "gallery__card-front" ]
+             [ img [ class "gallery__card-img"
+            ,src (imageUrl card.src) ] [] , div[class "gallery__card-front-text"][text "card title"]]
+            , div [ class "gallery__card-back" ] [ text "2020 is the best year." ]
             ]
         ]
 
