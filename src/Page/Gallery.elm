@@ -3,32 +3,28 @@ module Page.Gallery exposing (..)
 import Bootstrap.Accordion exposing (Card)
 import Bootstrap.Utilities.DomHelper exposing (className)
 import Html exposing (..)
-import Html.Attributes as Attr exposing (class, placeholder, src, type_)
+import Html.Attributes as Attr exposing (class, classList, placeholder, src, type_)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as D
 import Json.Encode as E
 
 
-loremUrl =
-    "https://picsum.photos/300/300"
-
-
 type alias Model =
     { input : String
-    , images : Images
+    , cards : List Card
     }
 
 
-type Images
-    = Lorem (List LoremPix)
+type Image
+    = Lorem LoremPix
     | None
 
 
 type Msg
-    = GotImages (Result Http.Error Images)
+    = GotImages (Result Http.Error (List Card))
     | SearchClicked
-    | CardClicked
+    | CardClicked Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -36,8 +32,8 @@ update msg model =
     case msg of
         GotImages result ->
             case result of
-                Ok images ->
-                    ( { model | images = images }, Cmd.none )
+                Ok cards ->
+                    ( { model | cards = cards }, Cmd.none )
 
                 Err err ->
                     ( model, Cmd.none )
@@ -45,15 +41,29 @@ update msg model =
         SearchClicked ->
             ( model, Cmd.none )
 
-        CardClicked ->
-            ( model, Cmd.none )
+        CardClicked index ->
+            let
+                newCards =
+                    toggleCard model.cards index
+            in
+            ( { model | cards = newCards }, Cmd.none )
 
 
 init : Model
 init =
     { input = ""
-    , images = None
+    , cards = List.repeat 90 (Card loremImage False)
     }
+
+
+toggleCard : List Card -> Int -> List Card
+toggleCard cards index =
+    case cards of
+        list :: rest ->
+            rest
+
+        _ ->
+            []
 
 
 
@@ -61,9 +71,9 @@ init =
 
 
 view : Model -> Html Msg
-view _ =
+view model =
     section [ class "gallery" ]
-        [ h2 [ class "gallery__header" ] [ text "by the power of unsplash" ]
+        [ h2 [ class "gallery__header" ] [ text "by the power of the unsplash api" ]
         , form [ class "gallery_search" ]
             [ input [ class "gallery__input", type_ "text", placeholder "image search" ] []
             , input
@@ -75,13 +85,40 @@ view _ =
                 []
             ]
         , div [ class "gallery__cardholder" ]
-            (List.repeat 9 imageCard)
+            (List.map imageCard model.cards)
         ]
 
 
-imageCard : Html Msg
-imageCard =
-    img [ class "gallery__card", src loremUrl, onClick CardClicked ] []
+imageCard : Card -> Html Msg
+imageCard card =
+    div
+        [ classList
+            [ ( "gallery__card", True )
+            , ( "gallery__card--selected", card.selected )
+            ]
+        , onClick (CardClicked 0)
+        ]
+        [ div [ class "gallery__card-inner" ]
+            [ div [ class "gallery__card-front" ] [ img [ src (imageUrl card.src) ] [] ]
+            , div [ class "gallery__card-back" ] [ text "info info info.. all the info" ]
+            ]
+        ]
+
+
+type alias Card =
+    { src : Image
+    , selected : Bool
+    }
+
+
+imageUrl : Image -> String
+imageUrl img =
+    case img of
+        Lorem lorem ->
+            lorem.url
+
+        None ->
+            "404"
 
 
 type alias LoremPix =
@@ -90,11 +127,19 @@ type alias LoremPix =
     }
 
 
+loremImage : Image
+loremImage =
+    Lorem
+        { title = "Just a lorem pixum photo"
+        , url = "https://picsum.photos/300/300"
+        }
+
+
 getLorem : Cmd Msg
 getLorem =
     Http.get
         { url = "https://elm-lang.org/assets/public-opinion.txt"
-        , expect = Http.expectJson GotImages loremDecoder
+        , expect = Http.expectJson GotImages (D.list cardDecoder)
         }
 
 
@@ -102,9 +147,9 @@ getLorem =
 -- ENCODE / DECODE
 
 
-loremDecoder : D.Decoder Images
-loremDecoder =
-    D.succeed (Lorem [])
+cardDecoder : D.Decoder Card
+cardDecoder =
+    D.succeed (Card None False)
 
 
 

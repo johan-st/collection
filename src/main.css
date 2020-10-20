@@ -254,10 +254,43 @@ img {
   margin: 0 auto;
 }
 .gallery__card {
-  background-color: #666666;
+  background-color: transparent;
   width: 15rem;
   height: 15rem;
   padding: 1rem;
   margin: 1rem;
   cursor: pointer;
+  perspective: 45rem;
+}
+
+.gallery__card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+.gallery__card--selected .gallery__card-inner {
+  cursor: pointer;
+  transform: rotateY(180deg);
+}
+
+/* Position the front and back side */
+.gallery__card-front,
+.gallery__card-back {
+  position: absolute;
+  width: 100%;
+  cursor: pointer;
+  height: 100%;
+  backface-visibility: hidden;
+}
+
+/* Style the back side */
+.gallery__card-back {
+  background-color: dodgerblue;
+  color: white;
+  cursor: pointer;
+  transform: rotateY(180deg);
 }

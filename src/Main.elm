@@ -200,8 +200,13 @@ update msg model =
         GotStackMsg _ ->
             ( model, Cmd.none )
 
-        GotGalleryMsg _ ->
-            ( model, Cmd.none )
+        GotGalleryMsg galleryMsg ->
+            case model.page of
+                Page.Gallery galleryModel ->
+                    toGallery model (Gallery.update galleryMsg galleryModel)
+
+                _ ->
+                    ( model, Cmd.none )
 
         UpdateLocalStorage ->
             ( model, Cmd.none )
@@ -503,6 +508,23 @@ toTimer model ( timerModel, cmd ) =
     in
     ( { model | page = Page.Timer timerModel, persistance = newPersist }
     , Cmd.map GotTimerMsg cmd
+    )
+
+
+toGallery : Model -> ( Gallery.Model, Cmd Gallery.Msg ) -> ( Model, Cmd Msg )
+toGallery model ( galleryModel, cmd ) =
+    let
+        newGallery =
+            Page.Gallery galleryModel
+
+        persist =
+            model.persistance
+
+        newPersist =
+            { persist | gallery = galleryModel }
+    in
+    ( { model | page = Page.Gallery galleryModel, persistance = newPersist }
+    , Cmd.map GotGalleryMsg cmd
     )
 
 
