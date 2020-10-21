@@ -4,7 +4,7 @@ import Array exposing (Array)
 import Bootstrap.Accordion exposing (Card)
 import Bootstrap.Utilities.DomHelper exposing (className)
 import Html exposing (..)
-import Html.Attributes as Attr exposing (class, classList, placeholder, src, type_)
+import Html.Attributes as Attr exposing (alt, class, classList, placeholder, src, type_)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as D
@@ -17,14 +17,10 @@ type alias Model =
     }
 
 
-type Image
-    = Lorem LoremPix
-    | None
-
-
 type Msg
     = GotImages (Result Http.Error (List Card))
-    | SearchClicked
+    | GotSingleUnsplash (Result Http.Error Image)
+    | GetRandomClicked
     | CardClicked Int
 
 
@@ -39,8 +35,16 @@ update msg model =
                 Err err ->
                     ( model, Cmd.none )
 
-        SearchClicked ->
-            ( model, Cmd.none )
+        GotSingleUnsplash result ->
+            case result of
+                Ok pic ->
+                    ( { model | cards = Array.push (Card pic False) model.cards }, Cmd.none )
+
+                Err err ->
+                    ( model, Cmd.none )
+
+        GetRandomClicked ->
+            ( model, getRandom )
 
         CardClicked index ->
             let
@@ -53,7 +57,7 @@ update msg model =
 init : Model
 init =
     { input = ""
-    , cards = Array.initialize 30 (\_ -> Card loremImage False)
+    , cards = Array.empty
     }
 
 
@@ -83,12 +87,13 @@ view model =
     section [ class "gallery" ]
         [ h2 [ class "gallery__header" ] [ text "by the power of the unsplash api" ]
         , form [ class "gallery_search" ]
-            [ input [ class "gallery__input", type_ "text", placeholder "image search" ] []
-            , input
+            [ --  input [ class "gallery__input", type_ "text", placeholder "image search" ] []
+              -- ,
+              input
                 [ class "gallery__submit"
                 , type_ "button"
-                , Attr.value "show me"
-                , onClick SearchClicked
+                , Attr.value "get random image"
+                , onClick GetRandomClicked
                 ]
                 []
             ]
@@ -110,12 +115,16 @@ imageCard ( index, card ) =
             [ div [ class "gallery__card-front" ]
                 [ img
                     [ class "gallery__card-img"
-                    , src (imageUrl card.src ++ "seed/" ++ String.fromInt index ++ "2/300/300?grayscale")
+                    , src card.src.url
+                    , alt card.src.alt
                     ]
                     []
-                , div [ class "gallery__card-front-text" ] [ text "card title" ]
+                , div [ class "gallery__card-front-text" ] [ text (String.fromInt card.src.likes ++ " people liked this") ]
                 ]
-            , div [ class "gallery__card-back" ] [ text "2020 is the best year." ]
+            , div [ class "gallery__card-back" ]
+                [ text
+                    ("by " ++ card.src.user.name ++ " from " ++ card.src.user.location)
+                ]
             ]
         ]
 
@@ -126,45 +135,58 @@ type alias Card =
     }
 
 
-imageUrl : Image -> String
-imageUrl img =
-    case img of
-        Lorem lorem ->
-            lorem.url
-
-        None ->
-            "404"
-
-
-type alias LoremPix =
+type alias LoremPic =
     { title : String
     , url : String
     }
 
 
-loremImage : Image
-loremImage =
-    Lorem
-        { title = "Just a lorem pixum photo"
-        , url = "https://picsum.photos/"
-        }
-
-
-getLorem : Cmd Msg
-getLorem =
+getRandom : Cmd Msg
+getRandom =
     Http.get
-        { url = "https://elm-lang.org/assets/public-opinion.txt"
-        , expect = Http.expectJson GotImages (D.list cardDecoder)
+        { url = "/api/random"
+        , expect = Http.expectJson GotSingleUnsplash unsplashDecoder
         }
+
+
+type alias Image =
+    { id : String
+    , desc : String
+    , alt : String
+    , url : String
+    , likes : Int
+    , user : User
+    }
+
+
+type alias User =
+    { name : String
+    , location : String
+    , bio : String
+    }
 
 
 
 -- ENCODE / DECODE
 
 
-cardDecoder : D.Decoder Card
-cardDecoder =
-    D.succeed (Card None False)
+unsplashDecoder : D.Decoder Image
+unsplashDecoder =
+    D.map6 Image
+        (D.field "id" D.string)
+        (D.field "desc" D.string)
+        (D.field "alt" D.string)
+        (D.field "url" D.string)
+        (D.field "likes" D.int)
+        (D.field "user" userDecoder)
+
+
+userDecoder : D.Decoder User
+userDecoder =
+    D.map3 User
+        (D.field "name" D.string)
+        (D.field "location" D.string)
+        (D.field "bio" D.string)
 
 
 
