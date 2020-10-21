@@ -1,9 +1,8 @@
 FROM node:8.11.4-alpine
 
-RUN mkdir -p /src
-RUN npm install express -g
+RUN mkdir -p /src && \
+   npm install express -g
 
-RUN pwd
 WORKDIR /src/
 ADD ./package.json /src/package.json
 ADD ./build /src/build
