@@ -72,7 +72,7 @@ img {
 }
 .main-nav__list {
   display: grid;
-  grid-template-columns: auto auto auto auto;
+  grid-template-columns: repeat(4, auto);
 }
 .main-nav__clock {
   color: var(--clr-accent);
@@ -93,6 +93,15 @@ img {
 .main {
   grid-area: main;
 }
+@media screen and (max-width: 500px) {
+  .main-nav__brand {
+    display: none;
+  }
+  .main-nav {
+    grid-template-columns: auto auto;
+  }
+}
+
 /* FOOTER */
 .footer {
   margin-top: 15rem;
@@ -253,6 +262,7 @@ img {
 /* GALLERY */
 .gallery__cardholder {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   max-width: 60rem;
   margin: 0 auto;
