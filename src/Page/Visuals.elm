@@ -4,6 +4,7 @@ import Element exposing (..)
 import Element.Background as BG
 import Element.Border as Border
 import Element.Font as Font
+import Html exposing (Html)
 import Utils.Color as C
 
 
@@ -27,58 +28,59 @@ init =
     "ready"
 
 
-view : Model -> Element Msg
+view : Model -> Html Msg
 view _ =
-    wrappedRow
-        [ width fill
-        , centerY
-        , spaceEvenly
-        , padding 50
-        , Font.color C.darkBase3
-        ]
-        [ el
-            [ BG.color C.accent1
-            , width (px 100)
-            , height (px 100)
-            , Border.innerShadow { blur = 6, color = C.highlight, offset = ( 4, 4 ), size = 4 }
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+    layout [] <|
+        wrappedRow
+            [ width fill
+            , centerY
+            , spaceEvenly
+            , padding 50
+            , Font.color C.darkBase3
             ]
-          <|
-            el
-                [ width fill
-                , height fill
-                , Border.innerShadow { blur = 6, color = C.shadow, offset = ( -2, -2 ), size = 4 }
+            [ el
+                [ BG.color C.accent1
+                , width (px 100)
+                , height (px 100)
+                , Border.innerShadow { blur = 6, color = C.highlight, offset = ( 4, 4 ), size = 4 }
                 , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
                 ]
-            <|
+              <|
+                el
+                    [ width fill
+                    , height fill
+                    , Border.innerShadow { blur = 6, color = C.shadow, offset = ( -2, -2 ), size = 4 }
+                    , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+                    ]
+                <|
+                    el [ centerX, centerY ] <|
+                        text "accent 1"
+            , el
+                [ BG.color C.accent2
+                , width (px 100)
+                , height (px 100)
+                , Border.shadow { blur = 0, color = C.shadow, offset = ( 4, 4 ), size = 0 }
+                , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+                ]
+              <|
                 el [ centerX, centerY ] <|
-                    text "accent 1"
-        , el
-            [ BG.color C.accent2
-            , width (px 100)
-            , height (px 100)
-            , Border.shadow { blur = 0, color = C.shadow, offset = ( 4, 4 ), size = 0 }
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+                    text "accent 2"
+            , el
+                [ BG.color C.accent3
+                , width (px 100)
+                , height (px 100)
+                , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+                ]
+              <|
+                el [ centerX, centerY ] <|
+                    text "accent 3"
+            , el
+                [ BG.color C.accent4
+                , width (px 100)
+                , height (px 100)
+                , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
+                ]
+              <|
+                el [ centerX, centerY ] <|
+                    text "accent 4"
             ]
-          <|
-            el [ centerX, centerY ] <|
-                text "accent 2"
-        , el
-            [ BG.color C.accent3
-            , width (px 100)
-            , height (px 100)
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
-            ]
-          <|
-            el [ centerX, centerY ] <|
-                text "accent 3"
-        , el
-            [ BG.color C.accent4
-            , width (px 100)
-            , height (px 100)
-            , Border.roundEach { topLeft = 15, topRight = 35, bottomRight = 15, bottomLeft = 35 }
-            ]
-          <|
-            el [ centerX, centerY ] <|
-                text "accent 4"
-        ]

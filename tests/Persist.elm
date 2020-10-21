@@ -30,7 +30,7 @@ persistance =
                 let
                     initial : Prime.Model
                     initial =
-                        "0"
+                        { input = "0" }
                 in
                 initial
                     |> Prime.modelEncoder

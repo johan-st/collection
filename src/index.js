@@ -14,13 +14,13 @@ const app = Elm.Main.init({
 
 app.ports.log.subscribe((log) => console.log("elm-log-port:\n", log));
 
-// // Listen for commands from the `setStorage` port.
-// // Turn the data to a string and put it in localStorage.
+// Listen for commands from the `setStorage` port.
+// Turn the data to a string and put it in localStorage.
 app.ports.setPersist.subscribe((persist) => {
-  // console.log("setPersist: ", persist);
+  // console.log("setPersist\n", JSON.parse(persist);
   localStorage.setItem("elm-model", JSON.stringify(persist));
 });
-// playSound
+// playSound;
 app.ports.soundPortActual.subscribe((select) => {
   if (select === "click") {
     sounds.click.play();
@@ -30,8 +30,6 @@ app.ports.soundPortActual.subscribe((select) => {
     sounds.jingle.play();
   } else if (select === "correct") {
     sounds.correct.play();
-  } else if (select === "wrong") {
-    sounds.wrong.play();
   } else {
     console.log("bad sound selection:", select);
   }

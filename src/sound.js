@@ -1,9 +1,8 @@
 export function initSound() {
   return {
-    click: new Audio("./click.wav"),
-    coin: new Audio("./coin.wav"),
-    correct: new Audio("./correct8bit.wav"),
-    jingle: new Audio("./jingle.wav"),
-    wrong: new Audio("./wrong.wav"),
+    click: new Audio("/static/click.wav"),
+    coin: new Audio("/static/coin.wav"),
+    correct: new Audio("/static/correct8bit.wav"),
+    jingle: new Audio("/static/jingle.wav"),
   };
 }
