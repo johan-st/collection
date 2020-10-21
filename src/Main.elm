@@ -281,15 +281,10 @@ menu model =
         , ul [ class "main-nav__list " ]
             [ li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/katas" ] [ text "katas" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
-<<<<<<< HEAD
-            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/404" ] [ text "lost" ] ]
-            ]
-=======
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/gallery" ] [ text "gallery" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/stack" ] [ text "stack" ] ]
             ]
         , button [ class "main-nav__clock" ] [ a [ class "main-nav__link main-nav__clock", href "/timer" ] [ text (timeString model.zone model.time) ] ]
->>>>>>> e322567eebee0c72aeca88d016774f889b592a67
         ]
 
 

@@ -53,7 +53,7 @@ update msg model =
 init : Model
 init =
     { input = ""
-    , cards = Array.initialize 9 (\_ -> Card loremImage False)
+    , cards = Array.initialize 30 (\_ -> Card loremImage False)
     }
 
 
@@ -62,10 +62,13 @@ toggleCard index cards =
     let
         maybeCard =
             Array.get index cards
+
+        newCards =
+            Array.map (\c -> { c | selected = False }) cards
     in
     case maybeCard of
         Just card ->
-            Array.set index { card | selected = not card.selected } cards
+            Array.set index { card | selected = not card.selected } newCards
 
         Nothing ->
             cards
@@ -107,7 +110,7 @@ imageCard ( index, card ) =
             [ div [ class "gallery__card-front" ]
                 [ img
                     [ class "gallery__card-img"
-                    , src (imageUrl card.src)
+                    , src (imageUrl card.src ++ "seed/" ++ String.fromInt index ++ "2/300/300?grayscale")
                     ]
                     []
                 , div [ class "gallery__card-front-text" ] [ text "card title" ]
@@ -143,7 +146,7 @@ loremImage : Image
 loremImage =
     Lorem
         { title = "Just a lorem pixum photo"
-        , url = "https://picsum.photos/300/300"
+        , url = "https://picsum.photos/"
         }
 
 

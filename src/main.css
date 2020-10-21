@@ -9,7 +9,7 @@
   --clr-accent: #55aaff;
   --clr-accent2: #ff8800;
   --clr-accent3: #fffb00;
-  --clr-card: #ffffff;
+  --clr-card: #f5e4be;
   --ff: "Source Sans Pro", "Trebuchet MS", "Lucida Grande",
     "Bitstream Vera Sans", "Helvetica Neue", sans-serif;
   --hand-font: "Nanum Pen Script", cursive;
@@ -272,6 +272,7 @@ img {
   perspective: 45rem;
 }
 .gallery__card-img {
+  padding: 0.5rem;
   border-top-left-radius: 0.5rem;
   border-top-right-radius: 0.5rem;
 }
@@ -285,6 +286,7 @@ img {
   transition: transform 0.8s;
   cursor: pointer;
   transform-style: preserve-3d;
+  box-shadow: 5px 5px 20px black;
 }
 .gallery__card--selected .gallery__card-inner {
   cursor: pointer;
