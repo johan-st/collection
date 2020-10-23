@@ -5,9 +5,9 @@
   "main": "server.js",
   "scripts": {
     "test": "elm-test",
-    "start": "elm-app start",
+    "start": "nodemon server.js",
     "test-watch": "elm-test --watch",
-    "start-watch": "nodemon server.js",
+    "start-elm": "elm-app start",
     "debug-elm": "elm make --debug --output build/static/elm.html src/Main.elm",
     "build-elm": "elm-app build",
     "build-container": "docker build . -t johanstyl/noodle",

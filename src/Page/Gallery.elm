@@ -133,7 +133,7 @@ type alias Card =
 unsplashSearch : String -> Cmd Msg
 unsplashSearch query =
     Http.get
-        { url = "/api/search?query=" ++ query
+        { url = "/api/search?query=THE" ++ query
         , expect = Http.expectJson GotUnsplashPage unsplashPageDecoder
         }
 
