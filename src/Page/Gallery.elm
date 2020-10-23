@@ -1,8 +1,6 @@
 module Page.Gallery exposing (..)
 
 import Array exposing (Array)
-import Bootstrap.Accordion exposing (Card)
-import Bootstrap.Utilities.DomHelper exposing (className)
 import Html exposing (..)
 import Html.Attributes as Attr exposing (alt, class, classList, placeholder, src, type_)
 import Html.Events exposing (onClick, onInput)
@@ -14,37 +12,29 @@ import Json.Encode as E
 type alias Model =
     { input : String
     , cards : Array Card
+    , pageMeta : UnsplashMeta
     }
 
 
 type Msg
-    = GotImages (Result Http.Error (List Card))
-    | GotSingleUnsplash (Result Http.Error Image)
-    | GetRandomClicked
+    = GotUnsplashPage (Result Http.Error UnsplashPage)
+    | SearchClicked String
     | CardClicked Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotImages result ->
+        GotUnsplashPage result ->
             case result of
-                Ok cards ->
-                    ( { model | cards = Array.fromList cards }, Cmd.none )
+                Ok unsplashPage ->
+                    ( { model | cards = Array.fromList <| List.map imgToCard unsplashPage.images }, Cmd.none )
 
                 Err err ->
                     ( model, Cmd.none )
 
-        GotSingleUnsplash result ->
-            case result of
-                Ok pic ->
-                    ( { model | cards = Array.push (Card pic False) model.cards }, Cmd.none )
-
-                Err err ->
-                    ( model, Cmd.none )
-
-        GetRandomClicked ->
-            ( model, getRandom )
+        SearchClicked query ->
+            ( model, unsplashSearch query )
 
         CardClicked index ->
             let
@@ -58,6 +48,7 @@ init : Model
 init =
     { input = ""
     , cards = Array.empty
+    , pageMeta = UnsplashMeta 1 Nothing Nothing
     }
 
 
@@ -87,13 +78,12 @@ view model =
     section [ class "gallery" ]
         [ h2 [ class "gallery__header" ] [ text "by the power of the unsplash api" ]
         , form [ class "gallery_search" ]
-            [ --  input [ class "gallery__input", type_ "text", placeholder "image search" ] []
-              -- ,
-              input
+            [ input [ class "gallery__input", type_ "text", placeholder "image search" ] []
+            , input
                 [ class "gallery__submit"
                 , type_ "button"
                 , Attr.value "get random image"
-                , onClick GetRandomClicked
+                , onClick (SearchClicked model.input)
                 ]
                 []
             ]
@@ -129,24 +119,38 @@ imageCard ( index, card ) =
         ]
 
 
+imgToCard : Image -> Card
+imgToCard img =
+    { src = img, selected = False }
+
+
 type alias Card =
     { src : Image
     , selected : Bool
     }
 
 
-type alias LoremPic =
-    { title : String
-    , url : String
+unsplashSearch : String -> Cmd Msg
+unsplashSearch query =
+    Http.get
+        { url = "/api/search?query=" ++ query
+        , expect = Http.expectJson GotUnsplashPage unsplashPageDecoder
+        }
+
+
+type alias UnsplashPage =
+    { current : Int
+    , next : Maybe Int
+    , prev : Maybe Int
+    , images : List Image
     }
 
 
-getRandom : Cmd Msg
-getRandom =
-    Http.get
-        { url = "/api/random"
-        , expect = Http.expectJson GotSingleUnsplash unsplashDecoder
-        }
+type alias UnsplashMeta =
+    { current : Int
+    , next : Maybe Int
+    , prev : Maybe Int
+    }
 
 
 type alias Image =
@@ -168,6 +172,15 @@ type alias User =
 
 
 -- ENCODE / DECODE
+
+
+unsplashPageDecoder : D.Decoder UnsplashPage
+unsplashPageDecoder =
+    D.map4 UnsplashPage
+        (D.field "current" D.int)
+        (D.field "next" (D.nullable D.int))
+        (D.field "prev" (D.nullable D.int))
+        (D.field "results" (D.list unsplashDecoder))
 
 
 unsplashDecoder : D.Decoder Image
