@@ -2,14 +2,9 @@ const express = require('express');
 const path = require('path');
 const uuid = require('uuid');
 const fetch = require('node-fetch');
-global.fetch = fetch;
-const Unsplash = require('unsplash-js').default;
-const toJson = require('unsplash-js').toJson;
-
-const unsplash = new Unsplash({
-  accessKey: 'CVQNCvZfIk9YWo4TkAK6KopdZyHo1DoXrjvDhl7X4yA',
-  timeout: 500, // values set in ms
-});
+const { query } = require('express');
+const unsplashKey = 'CVQNCvZfIk9YWo4TkAK6KopdZyHo1DoXrjvDhl7X4yA';
+const unsplashEndpoint = 'https://api.unsplash.com/photos/';
 
 console.log(`server root set to: \n${path.join(__dirname + '/build')}`);
 const port = 3000;
@@ -18,11 +13,11 @@ const app = express();
 app.use(logger);
 
 app.use('/static', express.static('./build/static'));
-app.get('/api/random', randomHandler);
-app.get('/api/search', search);
+app.get('/api/unsplash ', unsplashApi);
+app.get('/api', notFoundApi);
 
 // SPA
-app.get('/*', (req, res, next) => {
+app.get('/*', (req, res) => {
   console.log(`[${req.uuid}] -SPA- `);
   res.sendFile(path.join(__dirname + '/build/index.html'));
 });
@@ -48,65 +43,28 @@ app.listen(port, () => {
 });
 
 // API
-function randomHandler(req, res) {
-  unsplash.photos
-    .getRandomPhoto({ featured: true })
-    .then(toJson)
-    .then(json => {
-      if (json.errors) {
-        throw json;
-      } else {
-        console.log(`[${req.uuid}] -API- sent picture [${json.id}]`);
-        const imageJson = {
-          id: json.id,
-          desc: json.description ? json.description : 'no desc',
-          alt: json.alt_description ? json.alt_description : 'no alt availible',
-          url: json.urls.regular,
-          likes: json.likes,
-          user: {
-            name: json.user.name,
-            location: json.user.location,
-            bio: json.user.bio ? json.user.bio : 'no bio availible',
-          },
-        };
-        res.json(imageJson);
-      }
-    })
-    .catch(err => {
-      console.log(`[${req.uuid}] -API- unsplash error [${err}]`);
-      res.status = 500;
-      res.json({
-        uuid: req.uuid,
-        error: JSON.stringify(err),
-        err: err.errors,
-      });
-    });
+// TODO: consider passing request along bvewtween unsplash
+// and frntend whilst just adding the auth header
+function unsplashApi(req, res) {
+  console.log(`[${req.uuid}] -API- ${req.params.endpoint}`);
+  let url = unsplashEndpoint + req.params.endpoint;
+  if (req.query) {
+    url += `?`;
+    for (const key in req.query) {
+      url += `${key}=${req.query[key]}&`;
+    }
+    url = url.slice(0, -1);
+    console.log(req.params);
+  }
+  fetch(url, { method: 'get' })
+    .then(raw => raw)
+    .then(json => res.json(json))
+    .catch(err =>
+      console.log(`[${req.uuid}] - api-passthrough failed. ${err}`)
+    );
 }
-function search(req, res) {
-  unsplash.search
-    .photos(req.query.q, 1, 10)
-    .then(toJson)
-    .then(json => {
-      const response = {
-        total: json.total,
-        totalPages: json.total_pages,
-        results: json.results.map(image => {
-          return {
-            id: image.id,
-            desc: image.description ? image.description : 'no desc',
-            alt: image.alt_description
-              ? image.alt_description
-              : 'no alt availible',
-            url: image.urls.regular,
-            likes: image.likes,
-            user: {
-              name: image.user.name,
-              location: image.user.location,
-              bio: image.user.bio ? image.user.bio : 'no bio availible',
-            },
-          };
-        }),
-      };
-      res.json(response);
-    });
+function notFoundApi(req, res) {
+  res
+    .status(404)
+    .json({ status: 404, messege: 'This route is not in use', url: req.url });
 }

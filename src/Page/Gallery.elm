@@ -176,10 +176,9 @@ type alias User =
 
 unsplashPageDecoder : D.Decoder UnsplashPage
 unsplashPageDecoder =
-    D.map4 UnsplashPage
-        (D.field "current" D.int)
-        (D.field "next" (D.nullable D.int))
-        (D.field "prev" (D.nullable D.int))
+    D.map3 UnsplashPage
+        (D.field "total" D.int)
+        (D.field "total_pages" D.int)
         (D.field "results" (D.list unsplashDecoder))
 
 
