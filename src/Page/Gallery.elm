@@ -82,7 +82,7 @@ view model =
             , input
                 [ class "gallery__submit"
                 , type_ "button"
-                , Attr.value "get random image"
+                , Attr.value "find"
                 , onClick (SearchClicked model.input)
                 ]
                 []
@@ -133,15 +133,14 @@ type alias Card =
 unsplashSearch : String -> Cmd Msg
 unsplashSearch query =
     Http.get
-        { url = "/api/search?query=THE" ++ query
+        { url = "/api/unsplash/search/photos?query=" ++ query
         , expect = Http.expectJson GotUnsplashPage unsplashPageDecoder
         }
 
 
 type alias UnsplashPage =
-    { current : Int
-    , next : Maybe Int
-    , prev : Maybe Int
+    { total : Int
+    , totalPages : Int
     , images : List Image
     }
 

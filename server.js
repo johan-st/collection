@@ -65,6 +65,7 @@ function unsplashApi(req, res, next) {
   })
     .then(raw => raw.json())
     .then(json => {
+      console.log(json);
       return json;
     })
     .then(json => res.json(json))
