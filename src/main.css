@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap');
 
 :root {
   --clr-bg: #333333;
@@ -10,9 +10,9 @@
   --clr-accent2: #ff8800;
   --clr-accent3: #fffb00;
   --clr-card: #f5e4be;
-  --ff: "Source Sans Pro", "Trebuchet MS", "Lucida Grande",
-    "Bitstream Vera Sans", "Helvetica Neue", sans-serif;
-  --hand-font: "Nanum Pen Script", cursive;
+  --ff: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande',
+    'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
+  --hand-font: 'Nanum Pen Script', cursive;
 
   --card-shadow: 0 0 5px hsl(0, 0%, 0%), 1px -1px 3px hsla(0, 0%, 100%, 0.5);
   --card-shadow2: 0px 0px 10px hsl(0, 0%, 0%),
@@ -23,7 +23,7 @@
   background-color: var(--clr-bg);
 }
 
-[data-elm-hot="true"] {
+[data-elm-hot='true'] {
   height: inherit;
 }
 * {
@@ -40,9 +40,9 @@ body {
   display: grid;
   grid-template-rows: 3rem auto auto;
   grid-template-areas:
-    "nav"
-    "main"
-    "foot";
+    'nav'
+    'main'
+    'foot';
 }
 
 a {
@@ -308,6 +308,16 @@ img {
   background-color: var(--clr-card);
   cursor: pointer;
   transform: rotateY(180deg);
+}
+
+.error {
+  font-size: 0.75rem;
+  color: red;
+  max-width: 30rem;
+  margin: 2rem auto;
+}
+.error__messege {
+  margin: 2rem;
 }
 
 /* SMALL */

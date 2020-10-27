@@ -13,6 +13,7 @@ type alias Model =
     { input : String
     , cards : Array Card
     , pageMeta : UnsplashMeta
+    , error : Maybe Http.Error
     }
 
 
@@ -32,11 +33,11 @@ update msg model =
                     ( { model | cards = Array.fromList <| List.map imgToCard unsplashPage.images }, Cmd.none )
 
                 Err err ->
-                    ( model, Cmd.none )
+                    ( { model | error = Just err }, Cmd.none )
 
         InputChanged newValue ->
-            ( {model| input = newValue},  Cmd.none )
-            
+            ( { model | input = newValue }, Cmd.none )
+
         SearchClicked query ->
             ( model, unsplashSearch query )
 
@@ -53,6 +54,7 @@ init =
     { input = ""
     , cards = Array.empty
     , pageMeta = UnsplashMeta 1 Nothing Nothing
+    , error = Nothing
     }
 
 
@@ -79,20 +81,26 @@ toggleCard index cards =
 
 view : Model -> Html Msg
 view model =
-    section [ class "gallery" ]
-        [ h2 [ class "gallery__header" ] [ text "by the power of the unsplash api" ]
-        , form [ class "gallery_search" ]
-            [ input [ class "gallery__input", type_ "text", placeholder "image search" , onInput InputChanged] []
-            , input
-                [ class "gallery__submit"
-                , type_ "button"
-                , Attr.value "find"
-                , onClick (SearchClicked model.input)
+    div []
+        [ section [ class "gallery" ]
+            [ h2 [ class "gallery__header" ] [ text "by the power of the unsplash api" ]
+            , form [ class "gallery_search" ]
+                [ input [ class "gallery__input", type_ "text", placeholder "image search", onInput InputChanged ] []
+                , input
+                    [ class "gallery__submit"
+                    , type_ "button"
+                    , Attr.value "find"
+                    , onClick (SearchClicked model.input)
+                    ]
+                    []
                 ]
-                []
+            , div [ class "gallery__cardholder" ]
+                (List.map imageCard (Array.toIndexedList model.cards))
             ]
-        , div [ class "gallery__cardholder" ]
-            (List.map imageCard (Array.toIndexedList model.cards))
+        , section
+            [ class "error" ]
+            [ errorView model.error
+            ]
         ]
 
 
@@ -134,12 +142,36 @@ type alias Card =
     }
 
 
+errorView : Maybe Http.Error -> Html Msg
+errorView maybeErr =
+    case maybeErr of
+        Just err ->
+            case err of
+                Http.Timeout ->
+                    div [ class "error__messege" ] [ text "timeout" ]
+
+                Http.NetworkError ->
+                    div [ class "error__messege" ] [ text "network error" ]
+
+                Http.BadUrl url ->
+                    div [ class "error__messege" ] [ text ("Bad url: " ++ url) ]
+
+                Http.BadBody body ->
+                    div [ class "error__messege" ] [ text ("Bad body: " ++ body) ]
+
+                Http.BadStatus code ->
+                    div [ class "error__messege" ] [ text ("Bad status: " ++ String.fromInt code) ]
+
+        Nothing ->
+            div [] [ text "no errors" ]
+
+
 unsplashSearch : String -> Cmd Msg
 unsplashSearch query =
-        Http.get
-            { url = "/api/unsplash/search/photos?query=" ++ query
-            , expect = Http.expectJson GotUnsplashPage unsplashPageDecoder
-            }
+    Http.get
+        { url = "/api/unsplash/search/photos?query=" ++ query
+        , expect = Http.expectJson GotUnsplashPage unsplashPageDecoder
+        }
 
 
 type alias UnsplashPage =
