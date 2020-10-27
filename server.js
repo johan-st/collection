@@ -13,7 +13,7 @@ const app = express();
 app.use(logger);
 
 app.use('/static', express.static('./build/static'));
-app.get('/api/unsplash/:endpoint*', unsplashApi);
+app.get('/api/unsplash/*', unsplashApi);
 app.get('/api*+', notFoundApi);
 
 // SPA
@@ -47,7 +47,7 @@ app.listen(port, () => {
 // and frntend whilst just adding the auth header
 function unsplashApi(req, res, next) {
   console.log(`[${req.uuid}] -API- `);
-  let url = unsplashEndpoint + req.params.endpoint;
+  let url = unsplashEndpoint + req.params[0];
   if (req.query) {
     url += `?`;
     for (const key in req.query) {
@@ -55,6 +55,7 @@ function unsplashApi(req, res, next) {
     }
     url = url.slice(0, -1);
     console.log(req.params);
+    console.log(url.split('unsplash/'));
   }
   console.log(`[${req.uuid}] -API PASSTHROUGH-  ${url}`);
   fetch(url, {

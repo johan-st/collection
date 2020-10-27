@@ -8,7 +8,7 @@
     "start": "nodemon server.js",
     "test-watch": "elm-test --watch",
     "start-elm": "elm-app start",
-    "debug-elm": "elm make --debug --output build/static/elm.html src/Main.elm",
+    "debug-elm": "elm make --debug --output build/static/index.js src/Main.elm",
     "build-elm": "elm-app build",
     "build-container": "docker build . -t johanstyl/noodle",
     "container-dev": "docker run -p 3000:3000 --name noodle -d johanstyl/noodle",

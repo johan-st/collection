@@ -18,6 +18,7 @@ type alias Model =
 
 type Msg
     = GotUnsplashPage (Result Http.Error UnsplashPage)
+    | InputChanged String
     | SearchClicked String
     | CardClicked Int
 
@@ -33,6 +34,9 @@ update msg model =
                 Err err ->
                     ( model, Cmd.none )
 
+        InputChanged newValue ->
+            ( {model| input = newValue},  Cmd.none )
+            
         SearchClicked query ->
             ( model, unsplashSearch query )
 
@@ -78,7 +82,7 @@ view model =
     section [ class "gallery" ]
         [ h2 [ class "gallery__header" ] [ text "by the power of the unsplash api" ]
         , form [ class "gallery_search" ]
-            [ input [ class "gallery__input", type_ "text", placeholder "image search" ] []
+            [ input [ class "gallery__input", type_ "text", placeholder "image search" , onInput InputChanged] []
             , input
                 [ class "gallery__submit"
                 , type_ "button"
@@ -132,10 +136,10 @@ type alias Card =
 
 unsplashSearch : String -> Cmd Msg
 unsplashSearch query =
-    Http.get
-        { url = "/api/unsplash/search/photos?query=" ++ query
-        , expect = Http.expectJson GotUnsplashPage unsplashPageDecoder
-        }
+        Http.get
+            { url = "/api/unsplash/search/photos?query=" ++ query
+            , expect = Http.expectJson GotUnsplashPage unsplashPageDecoder
+            }
 
 
 type alias UnsplashPage =
