@@ -118,14 +118,14 @@ imageCard ( index, card ) =
                 [ img
                     [ class "gallery__card-img"
                     , src card.src.url
-                    , alt card.src.alt
+                    , alt (Maybe.withDefault "" card.src.alt)
                     ]
                     []
                 , div [ class "gallery__card-front-text" ] [ text (String.fromInt card.src.likes ++ " people liked this") ]
                 ]
             , div [ class "gallery__card-back" ]
                 [ text
-                    ("by " ++ card.src.user.name ++ " from " ++ card.src.user.location)
+                    ("by " ++ card.src.user.name ++ " from " ++ Maybe.withDefault "unknown" card.src.user.location)
                 ]
             ]
         ]
@@ -190,8 +190,8 @@ type alias UnsplashMeta =
 
 type alias Image =
     { id : String
-    , desc : String
-    , alt : String
+    , description : Maybe String
+    , alt : Maybe String
     , url : String
     , likes : Int
     , user : User
@@ -200,8 +200,8 @@ type alias Image =
 
 type alias User =
     { name : String
-    , location : String
-    , bio : String
+    , location : Maybe String
+    , bio : Maybe String
     }
 
 
@@ -221,9 +221,9 @@ unsplashDecoder : D.Decoder Image
 unsplashDecoder =
     D.map6 Image
         (D.field "id" D.string)
-        (D.field "desc" D.string)
-        (D.field "alt" D.string)
-        (D.field "url" D.string)
+        (D.field "description" (D.nullable D.string))
+        (D.field "alt_description" (D.nullable D.string))
+        (D.at [ "urls", "regular" ] D.string)
         (D.field "likes" D.int)
         (D.field "user" userDecoder)
 
@@ -232,8 +232,8 @@ userDecoder : D.Decoder User
 userDecoder =
     D.map3 User
         (D.field "name" D.string)
-        (D.field "location" D.string)
-        (D.field "bio" D.string)
+        (D.field "location" (D.nullable D.string))
+        (D.field "bio" (D.nullable D.string))
 
 
 

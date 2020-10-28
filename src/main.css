@@ -272,6 +272,7 @@ img {
   perspective: 45rem;
 }
 .gallery__card-img {
+  object-fit: cover;
   padding: 0.5rem 0.5rem 0 0.5rem;
   height: 16rem;
   border-top-left-radius: 0.5rem;
