@@ -1,28 +1,38 @@
 {
-  "name": "salty-noodles",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "elm-test",
-    "start": "nodemon server.js",
-    "test-watch": "elm-test --watch",
-    "start-elm": "elm-app start",
-    "debug-elm": "elm make --debug --output build/static/index.js src/Main.elm",
-    "build": "elm-app build",
-    "build-container": "docker build . -t johanstyl/noodle",
-    "container-dev": "docker run -p 3000:3000 --name noodle -d johanstyl/noodle",
-    "push-container": "docker push johanstyl/noodle",
-    "build-push": "npm run build && npm run build-container && npm run push-container",
-    "prod": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "name": "collection",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
-    "express": "^4.17.1",
-    "node-fetch": "^2.6.1",
-    "unsplash-js": "^6.3.0",
-    "uuid": "^8.3.1"
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-scripts": "4.0.0",
+    "web-vitals": "^0.2.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
