@@ -18,6 +18,7 @@ import Page.Search as Search
 import Page.Stack as Stack
 import Page.Timer as Timer exposing (..)
 import Page.Visuals as Visuals
+import Session exposing (Session(..))
 import Task
 import Time
 import Url exposing (Url)
@@ -90,6 +91,7 @@ init flags url key =
                 , page = Home
                 , url = url
                 , persistance = initialPersistance flags
+                , session = Guest
                 , time = Time.millisToPosix 0
                 , zone = Time.utc
                 }
@@ -263,6 +265,9 @@ urlUpdate url model =
 
                 "/gallery" ->
                     Page.fromModel <| Page.G model.persistance.gallery
+
+                "/login" ->
+                    Page.fromModel <| Page.L Login.init
 
                 _ ->
                     Page.NotFound_404

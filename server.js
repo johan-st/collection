@@ -1,16 +1,20 @@
 const express = require('express');
 const path = require('path');
 const uuid = require('uuid');
-const { unsplashApi, apiNotFound } = require('./routes');
+const bodyParser = require('body-parser');
+const { unsplashApi, apiNotFound, jwtGet, jwtTest } = require('./routes');
 
 console.log(`server root set to: \n${path.join(__dirname + '/build')}`);
 const port = 3000;
 const app = express();
 
 app.use(logger);
+app.use(bodyParser.json());
 
 app.use('/static', express.static('./build/static'));
 app.get('/api/unsplash/*', unsplashApi);
+app.get('/jwt/get', jwtGet);
+app.get('/jwt/test', jwtTest);
 app.get('/api*+', apiNotFound);
 
 // SPA
