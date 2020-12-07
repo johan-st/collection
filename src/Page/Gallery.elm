@@ -242,7 +242,7 @@ userDecoder =
 
 modelEncoder : Model -> E.Value
 modelEncoder model =
-    E.string "yup"
+    E.string "not implemented"
 
 
 modelDecoder : D.Decoder Model

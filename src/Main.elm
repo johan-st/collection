@@ -9,6 +9,7 @@ import Json.Decode as D
 import Json.Encode as E exposing (encode)
 import Page.FizzBuzz as FizzBuzz exposing (Msg(..), Soda(..))
 import Page.Gallery as Gallery
+import Page.Login as Login
 import Page.Page as Page exposing (Page(..))
 import Page.PrimeFactorization as Prime
 import Page.Resources as Resources
@@ -75,6 +76,9 @@ init flags url key =
 
                 "/gallery" ->
                     Page.Gallery persist.gallery
+
+                "/login" ->
+                    Page.Login persist.login
 
                 _ ->
                     Page.NotFound_404
@@ -283,6 +287,7 @@ menu model =
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/resources" ] [ text "links" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/gallery" ] [ text "gallery" ] ]
             , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/stack" ] [ text "stack" ] ]
+            , li [ class "main-nav__list-item" ] [ a [ class "main-nav__link", href "/login" ] [ text "login" ] ]
             ]
         , button [ class "main-nav__clock" ] [ a [ class "main-nav__link main-nav__clock", href "/timer" ] [ text (timeString model.zone model.time) ] ]
         ]
@@ -320,6 +325,9 @@ mainContent model =
 
         Gallery galleryModel ->
             section [ class "main" ] [ Gallery.view galleryModel |> Html.map GotGalleryMsg ]
+
+        Login loginModel ->
+            section [ class "main" ] [ Login.view loginModel ] |> Html.map GotLoginMsg
 
         _ ->
             section [ class "main" ] [ pageNotFound_404 ]

@@ -5,6 +5,7 @@ import Json.Decode as D
 import Json.Encode as E
 import Page.FizzBuzz as FizzBuzz
 import Page.Gallery as Gallery
+import Page.Login as Login
 import Page.PrimeFactorization as Prime
 import Page.RomanNumerals as Numerals
 import Page.Search as Search
@@ -23,6 +24,7 @@ type Model
     | S Search.Model
     | ST Stack.Model
     | G Gallery.Model
+    | L Login.Model
 
 
 type Page
@@ -38,6 +40,7 @@ type Page
     | Stack Stack.Model
     | Gallery Gallery.Model
     | NotFound_404
+    | Login Login.Model
 
 
 fromModel : Model -> Page
@@ -66,3 +69,6 @@ fromModel m =
 
         G model ->
             Gallery model
+
+        L model ->
+            Login model
