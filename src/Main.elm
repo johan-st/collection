@@ -40,6 +40,7 @@ type alias Model =
     , page : Page
     , url : Url.Url
     , persistance : PersistV2
+    , session : Session
     , time : Time.Posix
     , zone : Time.Zone
     }
@@ -78,7 +79,7 @@ init flags url key =
                     Page.Gallery persist.gallery
 
                 "/login" ->
-                    Page.Login persist.login
+                    Page.Login Login.init
 
                 _ ->
                     Page.NotFound_404
@@ -134,6 +135,7 @@ type Msg
     | GotResourceMsg Resources.Msg
     | GotStackMsg Stack.Msg
     | GotGalleryMsg Gallery.Msg
+    | GotLoginMsg Login.Msg
     | UpdateLocalStorage
 
 
@@ -202,6 +204,9 @@ update msg model =
             ( model, Cmd.none )
 
         GotStackMsg _ ->
+            ( model, Cmd.none )
+
+        GotLoginMsg _ ->
             ( model, Cmd.none )
 
         GotGalleryMsg galleryMsg ->
