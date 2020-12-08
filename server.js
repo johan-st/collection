@@ -2,7 +2,13 @@ const express = require('express');
 const path = require('path');
 const uuid = require('uuid');
 const bodyParser = require('body-parser');
-const { unsplashApi, apiNotFound, jwtGet, jwtTest } = require('./routes');
+const {
+  unsplashApi,
+  apiNotFound,
+  jwtGet,
+  jwtTest,
+  loginRouter,
+} = require('./routes');
 
 console.log(`server root set to: \n${path.join(__dirname + '/build')}`);
 const port = 3000;
@@ -13,6 +19,7 @@ app.use(bodyParser.json());
 
 app.use('/static', express.static('./build/static'));
 app.get('/api/unsplash/*', unsplashApi);
+app.post('/login', loginRouter);
 app.get('/jwt/get', jwtGet);
 app.get('/jwt/test', jwtTest);
 app.get('/api*+', apiNotFound);

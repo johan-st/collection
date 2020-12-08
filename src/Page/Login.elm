@@ -7,7 +7,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as D
 import Json.Encode as E
-import JsonWebToken as JWT exposing (hmacSha256)
+import Jwt exposing (decodeToken, tokenDecoder)
 import Page.Gallery exposing (User)
 import Session exposing (Session(..))
 
@@ -47,8 +47,14 @@ update msg model =
 
         LoginClicked ->
             ( model
-            , Http.get
+            , Http.post
                 { url = "/jwt/get"
+                , body =
+                    Http.jsonBody <|
+                        E.object
+                            [ ( "username", E.string model.userInput )
+                            , ( "password", E.string model.pwInput )
+                            ]
                 , expect = Http.expectJson GotLoginResult loginResultDecoder
                 }
             )
@@ -59,7 +65,7 @@ update msg model =
                     ( { model | notification = token, jwtSecret = secret }, Cmd.none )
 
                 Err err ->
-                    Debug.todo <| Debug.toString err
+                    ( { model | notification = "error in login result" }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -86,19 +92,16 @@ loginResultDecoder =
 
 type alias Token =
     { iat : Int
+    , exp : Int
     , user : String
     , permissions : List String
     }
 
 
-test =
-    JWT.encode hmacSha256 Json.Encode.string "secret" "some payload"
-        |> JWT.decode Json.Decode.string "secret"
-
-
 tokenDecoder : D.Decoder Token
 tokenDecoder =
-    D.map3 Token
+    D.map4 Token
         (D.field "iat" D.int)
+        (D.field "exp" D.int)
         (D.field "user" D.string)
         (D.field "permissions" (D.list D.string))

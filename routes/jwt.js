@@ -3,7 +3,7 @@ const prevSecret = 'sten';
 const secret = 'sten';
 
 const jwtGet = (req, res, next) => {
-  var token = jwt.sign('test', secret, {
+  var token = jwt.sign({ msg: 'test' }, secret, {
     algorithm: 'HS512',
   });
   console.log(token);
