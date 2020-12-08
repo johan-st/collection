@@ -72,7 +72,7 @@ img {
 }
 .main-nav__list {
   display: grid;
-  grid-template-columns: repeat(4, auto);
+  grid-template-columns: repeat(5, auto);
 }
 .main-nav__clock {
   color: var(--clr-accent);
@@ -182,7 +182,19 @@ img {
 .kata-links__link:hover {
   background-color: inherit;
 }
-
+/* LOGIN */
+.login__form {
+  margin-top: 25%;
+}
+.login__input {
+}
+.login__button {
+}
+.login__notification {
+  max-width: 90%;
+  line-break: anywhere;
+  margin: 0 auto;
+}
 /* KATAS */
 .kata__heading {
   font-size: 2rem;

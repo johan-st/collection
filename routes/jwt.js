@@ -1,15 +1,17 @@
 const jwt = require('jsonwebtoken');
+const prevSecret = 'sten';
+const secret = 'sten';
 
 const jwtGet = (req, res, next) => {
-  var token = jwt.sign(
-    { foo: 'bar', iat: Math.floor(Date.now() / 1000) - 30 },
-    'shhhhh'
-  );
-  res.json({ token });
+  var token = jwt.sign('test', secret, {
+    algorithm: 'HS512',
+  });
+  console.log(token);
+  res.json({ token, secret });
 };
 
 const jwtTest = (req, res, next) => {
-  const token = jwt.verify(req.body.token, 'shhhhh');
+  const token = jwt.verify(req.body.token, secret);
   res.json({ token });
 };
 

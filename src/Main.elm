@@ -208,8 +208,13 @@ update msg model =
         GotStackMsg _ ->
             ( model, Cmd.none )
 
-        GotLoginMsg _ ->
-            ( model, Cmd.none )
+        GotLoginMsg loginMsg ->
+            case model.page of
+                Login loginModel ->
+                    toLogin model (Login.update loginMsg loginModel)
+
+                _ ->
+                    ( model, Cmd.none )
 
         GotGalleryMsg galleryMsg ->
             case model.page of
@@ -543,6 +548,17 @@ toGallery model ( galleryModel, cmd ) =
     in
     ( { model | page = Page.Gallery galleryModel, persistance = newPersist }
     , Cmd.map GotGalleryMsg cmd
+    )
+
+
+toLogin : Model -> ( Login.Model, Cmd Login.Msg ) -> ( Model, Cmd Msg )
+toLogin model ( loginModel, cmd ) =
+    let
+        newLogin =
+            Page.Login loginModel
+    in
+    ( { model | page = newLogin }
+    , Cmd.map GotLoginMsg cmd
     )
 
 
