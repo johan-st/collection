@@ -1,4 +1,4 @@
-const unsplashKey = 'CVQNCvZfIk9YWo4TkAK6KopdZyHo1DoXrjvDhl7X4yA';
+const unsplashKey = process.env.API_KEY;
 const unsplashEndpoint = 'https://api.unsplash.com/';
 const fetch = require('node-fetch');
 
@@ -26,7 +26,7 @@ function unsplashApi(req, res, next) {
   })
     .then(raw => raw.json())
     .then(json => {
-      console.log(json);
+      // console.log(json);
       return json;
     })
     .then(json => res.json(json))

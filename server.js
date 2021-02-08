@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const uuid = require('uuid');
@@ -11,7 +12,7 @@ const {
 } = require('./routes');
 
 console.log(`server root set to: \n${path.join(__dirname + '/build')}`);
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT;
 const app = express();
 
 app.use(logger);
