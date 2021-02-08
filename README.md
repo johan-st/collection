@@ -1,7 +1,7 @@
 # </salty noodles>
 
 a playgrounnd and learning experience
-[link](http://salt.styyl.services)
+[link](https://salty-noodles.herokuapp.com)
 
 ---
 
