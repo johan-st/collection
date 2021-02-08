@@ -1,7 +1,7 @@
 {
   "name": "salty-noodles",
   "version": "1.0.0",
-  "description": "",
+  "description": "a playground for my free time",
   "main": "server.js",
   "scripts": {
     "test": "elm-test",
