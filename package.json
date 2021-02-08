@@ -26,5 +26,8 @@
     "node-fetch": "^2.6.1",
     "unsplash-js": "^6.3.0",
     "uuid": "^8.3.1"
+  },
+  "devDependencies": {
+    "elm-app": "0.0.19"
   }
 }
