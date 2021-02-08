@@ -14,6 +14,7 @@
     "container-dev": "docker run -p 3000:3000 --name noodle -d johanstyl/noodle",
     "push-container": "docker push johanstyl/noodle",
     "build-push": "npm run build && npm run build-container && npm run push-container",
+    "heroku": "npm run build && heroku container:push web -a salty-noodles && heroku container:release web -a salty-noodles",
     "prod": "node server.js"
   },
   "keywords": [],
@@ -28,6 +29,6 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "elm-app": "0.0.19"
+    "create-elm-app": "^5.22.0"
   }
 }
