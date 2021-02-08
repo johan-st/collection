@@ -1,6 +1,7 @@
 FROM node:8.11.4-alpine
 
 ENV API_KEY=CVQNCvZfIk9YWo4TkAK6KopdZyHo1DoXrjvDhl7X4yA
+ENV PORT=80
 
 RUN mkdir -p /src && \
    npm install express -g
