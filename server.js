@@ -11,7 +11,7 @@ const {
 } = require('./routes');
 
 console.log(`server root set to: \n${path.join(__dirname + '/build')}`);
-const port = 3000;
+const PORT = process.env.PORT || 80;
 const app = express();
 
 app.use(logger);
@@ -45,6 +45,6 @@ function logger(req, res, next) {
 }
 
 // INIT
-app.listen(port, () => {
-  console.log('listening to port 3000');
+app.listen(PORT, () => {
+  console.log('listening to port ' + PORT);
 });

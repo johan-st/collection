@@ -6,6 +6,7 @@ RUN mkdir -p /src && \
 WORKDIR /src/
 ADD ./package.json /src/package.json
 ADD ./build /src/build
+ADD ./routes /src/routes
 ADD ./server.js /src/server.js
 RUN npm install
 
